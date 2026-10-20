@@ -149,3 +149,34 @@ def test_quality_count_comparisons_do_not_overflow_fixed_width_integers(tmp_path
     source = write_csv(tmp_path, [{"UserID": "U0000000001", "PaymentAttemptCount": "9223372036854775807", "SuccessfulPaymentCount": "9223372036854775807", "FailedPaymentCount": "1"}])
     assert profile_csv(source, 1).consistency_violation_counts["payment_outcomes_exceed_attempts"] == 1
 
+
+@pytest.mark.parametrize("content", [
+    "UserID,TotalSettledPaise\nBAD-KEY,U0000000001,999\n",
+    "UserID,TotalSettledPaise\nU0000000002,1\nBAD-KEY,U0000000001,999\n",
+    "UserID,TotalSettledPaise\nU0000000001\n",
+    "UserID,TotalSettledPaise\nU0000000002,1\nU0000000001\n",
+])
+def test_malformed_record_width_cannot_shift_or_invent_customer_values(tmp_path, content):
+    source = tmp_path / "malformed.csv"
+    source.write_text(content)
+    with pytest.raises(ValidationFailure):
+        profile_csv(source, chunk_size=1)
+    settings = configured(tmp_path, source, ingestion_batch_size=1)
+    with pytest.raises(ValidationFailure):
+        stage_dataset(settings)
+    assert not list(settings.staging_dir.glob("*.sqlite3"))
+
+
+def test_explicit_empty_cells_and_quoted_newlines_preserve_csv_record_alignment(tmp_path):
+    source = tmp_path / "quoted.csv"
+    source.write_text('UserID,SyntheticName,TotalSettledPaise\nU0000000001,"Synthetic, first\nsecond line",\nU0000000002,Synthetic two,123\n')
+    report = profile_csv(source, chunk_size=1)
+    assert report.row_count == 2
+    assert report.missing_counts["TotalSettledPaise"] == 1
+    staged = stage_dataset(configured(tmp_path, source, ingestion_batch_size=1))
+    repository = SourceRepository(staged.sqlite_path)
+    first = repository.lookup(OWNER, "U0000000001")
+    assert first.values["SyntheticName"] == "Synthetic, first\nsecond line"
+    assert first.values["TotalSettledPaise"] is None
+    assert repository.lookup(OWNER, "U0000000002").values["TotalSettledPaise"] == 123
+

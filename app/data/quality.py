@@ -4,6 +4,7 @@ from collections import Counter
 from datetime import datetime, timezone
 import csv
 import hashlib
+from itertools import islice
 from pathlib import Path
 import re
 import sqlite3
@@ -53,24 +54,38 @@ def source_checksum(path: Path) -> str:
     return checksum.hexdigest()
 
 
+def _validated_columns(columns: list[str]) -> list[str]:
+    if not columns or len(columns) != len(set(columns)) or any(not column for column in columns):
+        raise ValidationFailure()
+    return columns
+
+
 def csv_columns(path: Path) -> list[str]:
     try:
         with path.open(newline="", encoding="utf-8-sig") as handle:
-            columns = next(csv.reader(handle))
-        if not columns or len(columns) != len(set(columns)) or any(not column for column in columns):
-            raise ValidationFailure()
-        return columns
+            return _validated_columns(next(csv.reader(handle, strict=True)))
     except (OSError, UnicodeError, csv.Error, StopIteration):
         raise ValidationFailure() from None
 
 
 def read_chunks(path: Path, chunk_size: int) -> Iterator[pd.DataFrame]:
+    """Validate logical CSV records before making bounded, all-string dataframes.
+
+    pandas.read_csv can silently use extra cells as an implicit index or pad
+    short records. Validate widths with the CSV parser to prevent either loss.
+    csv.reader preserves quoted commas and newlines as part of a single cell.
+    """
     if type(chunk_size) is not int or not 1 <= chunk_size <= 100_000:
         raise ValidationFailure()
     try:
-        yield from pd.read_csv(path, dtype=str, keep_default_na=False, na_filter=False,
-                               chunksize=chunk_size, encoding="utf-8-sig", on_bad_lines="error")
-    except (OSError, UnicodeError, ValueError, pd.errors.ParserError, pd.errors.EmptyDataError):
+        with path.open(newline="", encoding="utf-8-sig") as handle:
+            reader = csv.reader(handle, strict=True)
+            columns = _validated_columns(next(reader))
+            while rows := list(islice(reader, chunk_size)):
+                if any(len(row) != len(columns) for row in rows):
+                    raise ValidationFailure()
+                yield pd.DataFrame(rows, columns=columns, dtype=str)
+    except (OSError, UnicodeError, ValueError, csv.Error, StopIteration):
         raise ValidationFailure() from None
 
 
