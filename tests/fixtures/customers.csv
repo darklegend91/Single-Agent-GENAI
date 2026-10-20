@@ -1,0 +1,3 @@
+UserID,SyntheticName,RegistrationAtUTC,CustomerSegment,PlanPricePaise,LastCancellationReasonCode,PaymentAttemptCount,SuccessfulPaymentCount,FailedPaymentCount,TotalSettledPaise,NetRevenuePaise,RiskEventCount,ConfirmedRiskEvents,PendingRiskEvents,SupportTicketCount,OpenTicketCount,ResolvedTicketCount,LatestRewardMonth,SettledRevenue202510Paise,SettledRevenue202511Paise
+U0000000001,Synthetic Alpha,20251012130405,code_a,9007199254740993,UNEXPLAINED,7,4,2,9007199254740993,800,5,2,3,3,1,2,202609,9007199254740993,7
+U0000000002,Synthetic Beta,,code_b,,,0,0,0,0,0,0,0,0,0,0,0,202613,,
