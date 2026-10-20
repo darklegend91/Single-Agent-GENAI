@@ -1,0 +1,25 @@
+.venv-single-agent/
+
+# Local datasets, credentials, generated stores, and traces
+dataset/
+.env
+.env.*
+!.env.example
+output/
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3-shm
+*.sqlite3-wal
+traces/
+
+# Python build and test caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+.venv/
+dist/
+build/

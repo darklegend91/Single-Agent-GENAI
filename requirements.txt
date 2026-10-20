@@ -1,0 +1,15 @@
+numpy==2.5.4
+pandas==3.0.6
+pydantic==2.14.1
+pydantic-settings==2.16.1
+fastapi==0.156.2
+uvicorn==0.54.0
+httpx==0.28.1
+pydantic-ai-slim[openai]==2.58.0
+langchain-core==1.6.12
+langchain-openai==1.7.2
+langchain-milvus==0.4.0
+pymilvus==3.0.2
+langfuse==5.0.3
+pytest==9.1.1
+pytest-asyncio==1.4.0
