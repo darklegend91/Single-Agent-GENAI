@@ -1,0 +1,15 @@
+.git
+.env
+.env.*
+!.env.example
+.venv*
+__pycache__
+.pytest_cache
+dataset
+output
+.superpowers
+*.ipynb
+*.pdf
+*.sqlite3
+*.csv
+!tests/fixtures/customers.csv

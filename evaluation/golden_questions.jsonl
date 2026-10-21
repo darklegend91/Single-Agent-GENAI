@@ -1,0 +1,11 @@
+{"id": "customer", "user_id": "U0000000001", "question": "Show customer identity summary.", "expected_status": "answered", "expected_fields": ["SyntheticName"]}
+{"id": "subscription", "user_id": "U0000000001", "question": "Summarize subscription plan.", "expected_status": "answered", "expected_fields": ["PlanName", "SubscriptionStatus"]}
+{"id": "payments", "user_id": "U0000000001", "question": "Show successful and failed payment counts.", "expected_status": "answered", "expected_fields": ["SuccessfulPaymentCount", "FailedPaymentCount"]}
+{"id": "revenue", "user_id": "U0000000001", "question": "What is monthly settled revenue?", "expected_status": "answered", "expected_fields": ["SettledRevenue202510Paise", "SettledRevenue202609Paise"]}
+{"id": "support", "user_id": "U0000000001", "question": "Summarize support tickets.", "expected_status": "answered", "expected_fields": ["OpenTicketCount", "ResolvedTicketCount"]}
+{"id": "risk", "user_id": "U0000000001", "question": "Summarize confirmed and pending risk events.", "expected_status": "answered", "expected_fields": ["ConfirmedRiskEvents", "PendingRiskEvents"]}
+{"id": "engagement", "user_id": "U0000000001", "question": "Summarize engagement and login activity.", "expected_status": "answered", "expected_fields": ["UsageEventCount", "LoginEventCount"]}
+{"id": "referrals", "user_id": "U0000000001", "question": "Show referrals.", "expected_status": "answered", "expected_fields": ["ReferralInvitesSent", "ReferralConversions"]}
+{"id": "feedback", "user_id": "U0000000001", "question": "Show feedback recorded values.", "expected_status": "answered", "expected_fields": ["FeedbackCount"]}
+{"id": "rewards", "user_id": "U0000000001", "question": "Show reward history summary.", "expected_status": "answered", "expected_fields": ["HistoricalRewardCount"]}
+{"id": "unsupported_timeline", "user_id": "U0000000001", "question": "Give the exact payment event timeline.", "expected_status": "insufficient_evidence"}

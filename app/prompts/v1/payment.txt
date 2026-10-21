@@ -1,0 +1,1 @@
+Preserve independent invoice, settled, failed attempt, refund, and risk aggregates. Do not reconcile or infer accounting identities. All financial claims use exact integer paise.

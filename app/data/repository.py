@@ -1,15 +1,14 @@
 """Read-only source repository. Every customer lookup authorizes before SQL."""
 
-from contextlib import contextmanager
 import json
-from pathlib import Path
 import sqlite3
-from typing import Iterator
+from contextlib import contextmanager
+from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 
 from app.data.dictionary import FIELD_DICTIONARY
-from app.errors import DependencyError, NotFoundError, ValidationFailure
+from app.errors import CustomerNotFoundError, DependencyError, ValidationFailure
 from app.schemas import UserID
 from app.security import Principal, authorize
 
@@ -68,7 +67,7 @@ class SourceRepository:
         with self._connection() as connection:
             row = connection.execute("SELECT UserID, payload, source_row FROM customers WHERE UserID = ?", (user_id,)).fetchone()
             if row is None:
-                raise NotFoundError()
+                raise CustomerNotFoundError()
             metadata = dict(connection.execute("SELECT key, value FROM dataset_metadata"))
             return self._decode(row, metadata)
 

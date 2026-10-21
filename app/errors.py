@@ -28,6 +28,11 @@ class NotFoundError(AppError):
     message = "The requested resource was not found."
 
 
+class CustomerNotFoundError(NotFoundError):
+    code = "customer_not_found"
+    message = "This customer ID is not present in the active indexed dataset."
+
+
 class ConflictError(AppError):
     status_code = 409
     code = "conflict"

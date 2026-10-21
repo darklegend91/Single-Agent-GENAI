@@ -67,3 +67,17 @@ def test_invalid_server_credentials_are_rejected(mapping):
 def test_principal_constructor_does_not_accept_unknown_permissions():
     with pytest.raises(ValidationError):
         Principal(subject="x", customer_ids=frozenset(), ingest_admin=False, all_customers=True)
+
+
+def test_dataset_scope_requires_an_explicit_loopback_identity(credential_mapping):
+    scoped = {"local-token": {"subject": "local", "customer_ids": [], "dataset_scope": True}}
+    settings = Settings(_env_file=None, credential_mapping=scoped)
+    principal = authenticate("local-token", settings)
+    authorize(principal, "U0000000045")
+    with pytest.raises(AuthorizationError):
+        authorize(principal, "not-a-customer")
+    with pytest.raises(ValidationError, match="loopback"):
+        Settings(_env_file=None, credential_mapping=scoped, host="0.0.0.0")
+    authorize(authenticate("synthetic-customer-token", Settings(_env_file=None, credential_mapping=credential_mapping)), "U0000000001")
+    with pytest.raises(AuthorizationError):
+        authorize(authenticate("synthetic-customer-token", Settings(_env_file=None, credential_mapping=credential_mapping)), "U0000000045")

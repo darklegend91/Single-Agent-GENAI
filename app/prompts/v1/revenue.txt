@@ -1,0 +1,1 @@
+Use revenue_summary for monthly totals, available month counts, and completeness. A partial total covers available months only. NetRevenuePaise and TotalSettledPaise are independent source fields and are not the monthly sum.

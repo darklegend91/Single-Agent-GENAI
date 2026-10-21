@@ -19,16 +19,19 @@ class Settings(BaseSettings):
     active_manifest_path: Path = Path("output/active.json")
     staging_dir: Path = Path("output/staging")
     ingestion_batch_size: int = Field(default=1000, ge=1, le=100_000)
+    vector_index_limit: int | None = Field(default=None, ge=1)
     timestamp_formats: dict[str, str] = Field(default_factory=dict)
 
-    milvus_uri: str = "http://localhost:19530"
+    milvus_uri: str = "output/milvus.db"
     milvus_token: SecretStr | None = Field(default=None, repr=False)
     milvus_collection: str = Field(default="customer_knowledge", pattern=r"\A[A-Za-z_][A-Za-z0-9_]{0,127}\z")
-    embedding_provider: Literal["openai"] = "openai"
-    embedding_model: str = "text-embedding-3-small"
-    embedding_dimensions: int = Field(default=1536, ge=1, le=65536)
+    llm_provider: Literal["ollama", "openai"] = "ollama"
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    embedding_provider: Literal["ollama", "openai"] = "ollama"
+    embedding_model: str = "nomic-embed-text:latest"
+    embedding_dimensions: int = Field(default=768, ge=1, le=65536)
     schema_version: str = "1"
-    model_id: str = "openai:gpt-4.1-mini"
+    model_id: str = "ollama:qwen3:4b-instruct"
     openai_api_key: SecretStr | None = Field(default=None, repr=False)
     langfuse_public_key: SecretStr | None = Field(default=None, repr=False)
     langfuse_secret_key: SecretStr | None = Field(default=None, repr=False)
@@ -43,7 +46,7 @@ class Settings(BaseSettings):
     model_request_limit: int = Field(default=4, ge=1, le=20)
     tool_call_limit: int = Field(default=8, ge=1, le=100)
     output_retries: int = Field(default=1, ge=0, le=1)
-    request_timeout_seconds: float = Field(default=30, gt=0, le=300)
+    request_timeout_seconds: float = Field(default=120, gt=0, le=300)
     rate_limit_per_minute: int = Field(default=60, ge=1, le=10000)
     host: str = "127.0.0.1"
     port: int = Field(default=8000, ge=1, le=65535)
@@ -64,4 +67,6 @@ class Settings(BaseSettings):
     def coherent_limits(self) -> Self:
         if self.max_documents > self.top_k:
             raise ValueError("Maximum documents cannot exceed retrieval top-K")
+        if any(principal.dataset_scope for principal in self.credential_mapping.values()) and self.host not in {"127.0.0.1", "::1", "localhost"}:
+            raise ValueError("Dataset-wide customer access is restricted to a loopback API host")
         return self

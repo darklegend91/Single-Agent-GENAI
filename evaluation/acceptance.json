@@ -1,0 +1,8 @@
+{
+  "synthetic_correctness": 1.0,
+  "schema_pass_rate": 1.0,
+  "security_pass_rate": 1.0,
+  "unauthorized_disclosure_rate": 0.0,
+  "required_scenarios": 22,
+  "live_quality": "Must be measured with configured providers; not established by deterministic demo."
+}

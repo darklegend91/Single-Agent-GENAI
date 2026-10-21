@@ -1,15 +1,30 @@
 """Strict public contracts and a prose-free model output contract."""
 
+import re
 from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictFloat, StrictInt, StrictStr, StringConstraints, field_validator, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StrictBool, StrictFloat, StrictInt, StrictStr, StringConstraints, field_validator, model_validator
 
-UserID = Annotated[str, StringConstraints(strict=True, pattern=r"\AU[0-9]{10}\z")]
+def _fullmatch_user_id(value: str) -> str:
+    if re.fullmatch(r"U[0-9]{10}", value) is None:
+        raise ValueError("Invalid customer ID")
+    return value
+
+
+def _fullmatch_source_field(value: str) -> str:
+    if re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,127}", value) is None:
+        raise ValueError("Invalid source field")
+    return value
+
+
+# Ollama's OpenAI-compatible JSON-schema parser requires ^/$ anchors.
+# AfterValidators preserve Python full-match semantics (including no trailing newline).
+UserID = Annotated[str, StringConstraints(strict=True, pattern=r"^U[0-9]{10}$"), AfterValidator(_fullmatch_user_id)]
 NonemptyText = Annotated[str, StringConstraints(strict=True, strip_whitespace=True, min_length=1)]
-SourceField = Annotated[str, StringConstraints(strict=True, pattern=r"\A[A-Za-z][A-Za-z0-9_]{0,127}\z")]
+SourceField = Annotated[str, StringConstraints(strict=True, pattern=r"^[A-Za-z][A-Za-z0-9_]{0,127}$"), AfterValidator(_fullmatch_source_field)]
 AnswerStatus = Literal["answered", "insufficient_evidence", "refused"]
 MetricID = Literal["monthly_settled_total_paise", "monthly_settled_complete", "monthly_settled_available_months"]
-LimitationCode = Literal["missing_field", "incomplete_period", "unknown_code", "unresolved_timestamp", "aggregate_only", "no_relevant_evidence", "unsupported_question", "unverified_data_consistency"]
+LimitationCode = Literal["missing_field", "incomplete_period", "unknown_code", "unresolved_timestamp", "aggregate_only", "no_relevant_evidence", "unsupported_question", "unverified_data_consistency", "restricted_request", "customer_scope_mismatch"]
 ClaimValue = StrictStr | StrictBool | StrictInt | Annotated[StrictFloat, Field(allow_inf_nan=False)]
 
 

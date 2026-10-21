@@ -1,6 +1,7 @@
 """Server-controlled identities and explicit per-customer authorization."""
 
 import hmac
+import re
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, StrictBool
@@ -18,6 +19,9 @@ class Principal(BaseModel):
     subject: NonemptyText
     customer_ids: frozenset[UserID]
     ingest_admin: StrictBool = False
+    # Explicitly enabled only by the loopback local runner. The source repository
+    # still verifies that each requested ID exists in the active dataset.
+    dataset_scope: StrictBool = False
 
 
 def authenticate(token: str, settings: "Settings") -> Principal:
@@ -39,5 +43,9 @@ def authenticate(token: str, settings: "Settings") -> Principal:
 
 def authorize(principal: Principal, user_id: str) -> None:
     """Ingestion administration grants no implicit customer read permissions."""
-    if user_id not in principal.customer_ids:
+    if user_id in principal.customer_ids:
+        return
+    if principal.dataset_scope and re.fullmatch(r"U[0-9]{10}", user_id, re.ASCII):
+        return
+    else:
         raise AuthorizationError()

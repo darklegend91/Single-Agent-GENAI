@@ -13,3 +13,6 @@ pymilvus==3.0.2
 langfuse==5.0.3
 pytest==9.1.1
 pytest-asyncio==1.4.0
+streamlit==1.66.0
+langchain-ollama==1.1.0
+milvus-lite==3.2.2

@@ -5,6 +5,7 @@ dataset/
 .env
 .env.*
 !.env.example
+!.env.compose.example
 output/
 *.sqlite
 *.sqlite3

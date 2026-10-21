@@ -1,0 +1,1 @@
+Select the recorded fields relevant to the customer's question. Do not infer personal traits, code meanings, causes, or event sequences.
