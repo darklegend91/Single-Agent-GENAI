@@ -3,6 +3,7 @@ import os
 import hashlib
 import json
 import time
+from pathlib import Path
 import streamlit as st
 from frontend.client import BackendClient, BackendError
 from frontend.customer_scope import resolve_customer_id
@@ -153,6 +154,36 @@ with security_tab:
         use_container_width=True,
     )
     st.caption("A reliable factual accuracy percentage requires questions with reviewed, expected answers. This dashboard does not invent such a score; use the evaluation workflow for labeled tests.")
+
+    configured_report = os.environ.get("KA_EVALUATION_REPORT")
+    report_path = Path(configured_report) if configured_report else Path("output/reports/live_evaluation.json")
+    if not configured_report and not report_path.is_file():
+        report_path = Path("output/reports/evaluation.json")
+    st.markdown("**Latest labeled answer evaluation**")
+    try:
+        evaluation = json.loads(report_path.read_text()) if report_path.is_file() else None
+    except (OSError, json.JSONDecodeError):
+        evaluation = None
+    if evaluation and evaluation.get("metrics", {}).get("case_count", 0):
+        eval_metrics = evaluation["metrics"]
+        accuracy = eval_metrics.get("case_accuracy")
+        eval_cols = st.columns(3)
+        eval_cols[0].metric("Labeled case accuracy", f"{accuracy:.1%}" if accuracy is not None else "Not measured")
+        eval_cols[1].metric("Expected-field recall", f"{eval_metrics['expected_field_recall']:.1%}" if eval_metrics.get("expected_field_recall") is not None else "Not labeled")
+        eval_cols[2].metric("Expected-answer markers", f"{eval_metrics['expected_answer_marker_accuracy']:.1%}" if eval_metrics.get("expected_answer_marker_accuracy") is not None else "Not labeled")
+        evaluated_at = evaluation.get("evaluated_at", "time unavailable")
+        st.caption(f"{evaluation.get('mode', 'unknown')} · {evaluation.get('provider', 'provider unavailable')} · {eval_metrics['case_count']} reviewed case(s) · {evaluated_at}")
+        failed_cases = [row for row in evaluation.get("cases", []) if not row.get("correct", False)]
+        if failed_cases:
+            st.dataframe(
+                [{"Case": row.get("id"), "Outcome": row.get("status"), "Expected fields": f"{row.get('matched_field_count', 0)} / {row.get('expected_field_count', 0)}", "Expected answer checks": f"{row.get('matched_answer_marker_count', 0)} / {row.get('expected_answer_marker_count', 0)}"} for row in failed_cases],
+                hide_index=True,
+                use_container_width=True,
+            )
+        st.caption("Accuracy applies only to the labeled cases in this report. Synthetic mode uses a deterministic demo; run live mode to measure the configured API and model.")
+    else:
+        st.info(f"No labeled evaluation report found at `{report_path}`. Run the evaluator from a terminal to create one.")
+    st.code("python -m scripts.evaluate --mode live --cases evaluation/my_live_cases.jsonl --output output/reports/live_evaluation.json", language="bash")
 
     st.divider()
     st.subheader("Security and backend status")

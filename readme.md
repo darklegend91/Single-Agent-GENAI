@@ -157,11 +157,26 @@ python -m pytest -q
 ```
 
 ### E. Run Benchmark Evaluation
-Evaluate answer accuracy, schema compliance, and security guardrails:
+Run the synthetic deterministic suite. Its score measures only the bundled demonstration, not the configured Ollama model or live customer data:
 ```bash
-# Run synthetic offline evaluation benchmark
 python -m scripts.evaluate --mode synthetic
 ```
+
+To measure the running FastAPI app and configured model, create a private JSONL case file from [`evaluation/live_cases.example.jsonl`](evaluation/live_cases.example.jsonl). Replace the example customer ID, expected source fields, and expected answer text with reviewed values that the evaluation token is authorized to access. Add multiple cases across exact lookup, payment, subscription, revenue, broad RAG, and unsupported questions for a useful result.
+
+```bash
+# Set an evaluation-only bearer token without putting it in shell history or process arguments.
+read -s KA_EVAL_BEARER_TOKEN
+export KA_EVAL_BEARER_TOKEN
+export KA_EVAL_API_URL=http://127.0.0.1:8000
+
+python -m scripts.evaluate --mode live \
+  --cases /path/to/my_live_cases.jsonl \
+  --output output/reports/live_evaluation.json
+unset KA_EVAL_BEARER_TOKEN
+```
+
+Each case passes only when the expected response status, every expected evidence field, customer scope, and all listed `expected_answer_contains` markers match. The report includes case accuracy, expected-field recall, answer-marker accuracy, schema pass rate, and median/P95 latency. In the **Security & accuracy** tab, the latest report is shown with failed case IDs. Accuracy applies only to the reviewed questions and labels; it does not estimate all production conversations. Use `--fail-below 0.90` to make the command return a failing exit code below a chosen CI threshold.
 
 ### F. Run Interactive Demonstration
 Simulate supported, unsupported, and injection questions:
@@ -394,17 +409,19 @@ Checks the progress of an ingestion task.
 
 ## 8. Evaluation Metrics & Benchmark Results
 
-The system is tested against golden benchmarks defined in [`evaluation/golden_questions.jsonl`](file:///Users/adityapathania/Codes/bz/Single-Agent-GENAI/evaluation/golden_questions.jsonl) and red-team attacks in [`evaluation/security_cases.jsonl`](file:///Users/adityapathania/Codes/bz/Single-Agent-GENAI/evaluation/security_cases.jsonl).
+The system is tested against golden benchmarks defined in [`evaluation/golden_questions.jsonl`](evaluation/golden_questions.jsonl) and red-team attacks in [`evaluation/security_cases.jsonl`](evaluation/security_cases.jsonl). Use the evaluator instructions above for synthetic or live measurements.
 
 ### Evaluation Benchmark Results (`output/reports/evaluation.json`)
 
-| Metric | Target | Achieved Result | Status |
-| :--- | :---: | :---: | :---: |
-| **Answer Correctness** | $\ge 90\%$ | **100% (1.0)** | Passed |
-| **Schema Pass Rate** | $100\%$ | **100% (1.0)** | Passed |
-| **Unauthorized Disclosure Rate** | $0.0\%$ | **0.0%** | Passed |
-| **Median Request Latency** | $< 100\text{ ms}$ | **19.65 ms** | Passed |
-| **95th Percentile (P95) Latency** | $< 250\text{ ms}$ | **29.57 ms** | Passed |
+| Metric | What it means | Where to measure |
+| :--- | :--- | :--- |
+| **Labeled case accuracy** | Cases matching expected status, source fields, scope, and reviewed answer markers | `case_accuracy` in the generated evaluation report |
+| **Expected-field recall** | Required evidence fields present across labeled cases | `expected_field_recall` |
+| **Expected-answer marker accuracy** | Reviewed answer phrases/values present in responses | `expected_answer_marker_accuracy` |
+| **Schema pass rate** | Responses that satisfy the public response schema | `schema_pass_rate` |
+| **Median / P95 latency** | Observed end-to-end request latency for this evaluation run | `latency_median_ms` / `latency_p95_ms` |
+
+Do not treat synthetic demo scores as live model quality or historical numbers as current performance. Re-run a live evaluation with reviewed labels to measure the deployed configuration.
 
 ### Security Evaluation Results (`output/reports/security_evaluation.json`)
 

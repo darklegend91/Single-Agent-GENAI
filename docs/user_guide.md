@@ -62,6 +62,20 @@ python -m scripts.run_local --limit 100
 
 With `--limit`, only IDs present in that limited index can be queried. To restore full-dataset access, restart without `--limit`. For a persistent setup with explicit customer permissions, follow [setup and operation](setup.md) and configure the credential mapping and frontend token outside the UI. Keep those credentials private.
 
+## Measure answer accuracy
+
+The **Security & accuracy** tab shows the latest saved labeled evaluation, along with the questions that failed. Accuracy is only meaningful for cases with reviewed expected answers; session evidence coverage and Langfuse scores are useful grounding/operations signals but are not factual accuracy percentages.
+
+To evaluate the configured running backend, copy [`evaluation/live_cases.example.jsonl`](../evaluation/live_cases.example.jsonl) to a private local file, then replace the customer ID, expected source fields, and expected answer marker with values you have verified from that customer’s record. The bearer token must be authorized for every customer in the file. With FastAPI running, set `KA_EVAL_BEARER_TOKEN` and run:
+
+```sh
+python -m scripts.evaluate --mode live \
+  --cases /path/to/my_live_cases.jsonl \
+  --output output/reports/live_evaluation.json
+```
+
+The report measures case accuracy, status accuracy, expected-field recall, expected-answer marker accuracy, response schema, and request latency. It stores case IDs, statuses, field names, and counts; it does not save the answer text or bearer token. Synthetic mode (`python -m scripts.evaluate --mode synthetic`) is a deterministic demonstration and does not measure the live Ollama model.
+
 ## Troubleshooting
 
 - **Ollama connection error**: start the Ollama service, then run `ollama list` and confirm both `qwen3:4b-instruct` and `nomic-embed-text` are installed.

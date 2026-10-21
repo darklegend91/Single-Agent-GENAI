@@ -1,0 +1,1 @@
+{"id":"plan_name","user_id":"U0123456789","question":"What is the plan name?","expected_status":"answered","expected_fields":["PlanName"],"expected_answer_contains":["Plan Name: REPLACE_WITH_REVIEWED_PLAN_NAME"]}
