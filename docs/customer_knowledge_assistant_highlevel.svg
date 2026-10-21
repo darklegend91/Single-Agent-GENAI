@@ -1,0 +1,111 @@
+<svg class="workflow highlevel" width="1000" height="584" viewBox="0 0 1000 584" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="overview-title overview-desc">
+<style>
+:root { --paper:#f5f5f5; --paper-2:#ececec; --ink:#2d3142; --muted:#4f5d75; --soft:#5a6580; --rule:rgba(45,49,66,.12); --rule-solid:rgba(79,93,117,.25); --accent:#bf4520; --accent-tint:rgba(191,69,32,.08); --link:#2e5aa8; --series-1:#7c8f6f; --series-2:#5e7a9b; --sans:Arial,system-ui,sans-serif; --mono:Menlo,Consolas,monospace; }
+.node-mask {fill: var(--paper);}
+.node {stroke-width: 1;}
+.node.backend {fill: #fff; stroke: var(--ink);}
+.node.store {fill: rgba(45,49,66,.05); stroke: var(--muted);}
+.node.input {fill: rgba(79,93,117,.10); stroke: var(--soft);}
+.node.focal {fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2;}
+.node.output {fill: var(--paper-2); stroke: var(--muted);}
+.tagbox {fill: transparent; stroke-width: .8;}
+.tag-text {font: 500 7px var(--mono); letter-spacing: .08em; text-anchor: middle;}
+.tag.backend {stroke: rgba(45,49,66,.4); fill: var(--ink);}
+.tag.store {stroke: rgba(79,93,117,.55); fill: var(--muted);}
+.tag.input {stroke: rgba(90,101,128,.55); fill: var(--soft);}
+.tag.focal {stroke: rgba(191,69,32,.65); fill: var(--accent);}
+.tag.output {stroke: rgba(79,93,117,.55); fill: var(--muted);}
+.node-title {fill: var(--ink); font: 600 12px var(--sans); text-anchor: middle;}
+.node-sub {fill: var(--muted); font: 9px var(--mono); text-anchor: middle;}
+.connector {fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round;}
+.connector.link {stroke: var(--link);}
+.connector.accent {stroke: var(--accent);}
+.arrow-label-mask {fill: var(--paper);}
+.arrow-label {fill: var(--soft); font: 400 8px var(--mono); letter-spacing: .06em; text-anchor: middle;}
+.legend-rule {stroke: rgba(45,49,66,.16); stroke-width: .8;}
+.legend-text {fill: var(--muted); font: 400 9px var(--sans);}
+.legend-label {fill: var(--soft); font: 500 8px var(--mono); letter-spacing: .14em;}
+.phase-label {fill: var(--muted); font: 500 8px var(--mono); letter-spacing: .1em; text-anchor: middle;}
+.phase-chevron {fill: rgba(79,93,117,.06); stroke: var(--rule-solid); stroke-width: 1;}
+.source-zone {fill: rgba(79,93,117,.025); stroke: var(--rule-solid); stroke-width: 1; stroke-dasharray: 4 4;}
+.crosscut-label {fill: var(--paper); font: 500 8px var(--mono); letter-spacing: .1em; text-anchor: middle;}
+.crosscut-security {fill: #5e7a9b;}
+.crosscut-observe {fill: #7c8f6f;}
+.radar-ring {fill: none; stroke: var(--rule-solid); stroke-width: 1;}
+.radar-spoke {stroke: var(--rule); stroke-width: 1;}
+.radar-axis {fill: var(--ink); font: 500 12px var(--sans);}
+.radar-tick {fill: var(--soft); font: 9px var(--mono);}
+.radar-series {stroke-width: 2; stroke-linejoin: round;}
+.radar-legend {fill: var(--ink); font: 500 11px var(--sans);}
+</style>
+        <title id="overview-title">High-level local architecture of the Customer Knowledge Assistant</title>
+        <desc id="overview-desc">Customer CSV flows through pandas and Pydantic validation into SQLite and a compact Milvus Lite index. FastAPI serves authorized exact and retrieval paths to Streamlit. Security and Langfuse telemetry are cross-cutting controls.</desc>
+        <defs>
+          <marker id="overview-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#4f5d75"/></marker>
+          <marker id="overview-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#2e5aa8"/></marker>
+          <marker id="overview-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#bf4520"/></marker>
+        </defs>
+        <rect width="1000" height="584" fill="#f5f5f5"/>
+        <g aria-hidden="true">
+          <path class="phase-chevron" d="M0 4 H184 L192 18 L184 32 H0 Z"/><path class="phase-chevron" d="M192 4 H376 L384 18 L376 32 H192 L200 18 Z"/>
+          <path class="phase-chevron" d="M384 4 H568 L576 18 L568 32 H384 L392 18 Z"/><path class="phase-chevron" d="M576 4 H760 L768 18 L760 32 H576 L584 18 Z"/>
+          <path class="phase-chevron" d="M768 4 H964 V32 H768 L776 18 Z"/>
+          <text class="phase-label" x="92" y="21">SOURCE</text><text class="phase-label" x="288" y="21">INGEST</text><text class="phase-label" x="480" y="21">STORAGE</text><text class="phase-label" x="672" y="21">SERVE</text><text class="phase-label" x="866" y="21">CONSUME</text>
+          <rect class="source-zone" x="4" y="40" width="180" height="336" rx="4"/>
+          <text class="lane-label" x="16" y="56">LOCAL INPUT</text>
+        </g>
+        <!-- Labeled connectors are drawn behind their nodes. -->
+        <path class="connector link" d="M184 104 H212" marker-end="url(#overview-arrow-link)"/>
+        <path class="connector" d="M364 104 H404" marker-end="url(#overview-arrow)"/>
+        <path class="connector" d="M364 128 H380 Q388 128 388 136 V224 Q388 232 396 232 H404" marker-end="url(#overview-arrow)"/>
+        <path class="connector accent" d="M556 104 H596" marker-end="url(#overview-arrow-accent)"/>
+        <path class="connector" d="M556 232 H572 Q580 232 580 224 V128 Q580 120 588 120 H596" marker-end="url(#overview-arrow)"/>
+        <path class="connector link" d="M748 104 H790" marker-end="url(#overview-arrow-link)"/>
+        <!-- Opaque labels leave a visible gap around each connector. -->
+        <rect class="arrow-label-mask" x="186" y="84" width="24" height="12" rx="2"/><text class="arrow-label" x="198" y="93">CSV</text>
+        <rect class="arrow-label-mask" x="368" y="84" width="32" height="12" rx="2"/><text class="arrow-label" x="384" y="93">ROWS</text>
+        <rect class="arrow-label-mask" x="396" y="166" width="54" height="12" rx="2"/><text class="arrow-label" x="423" y="175">SUMMARIES</text>
+        <rect class="arrow-label-mask" x="558" y="84" width="36" height="12" rx="2"/><text class="arrow-label" x="576" y="93">EXACT</text>
+        <rect class="arrow-label-mask" x="588" y="166" width="38" height="12" rx="2"/><text class="arrow-label" x="607" y="175">TOP-K</text>
+        <rect class="arrow-label-mask" x="753" y="84" width="32" height="12" rx="2"/><text class="arrow-label" x="769" y="93">JSON</text>
+        <!-- Nodes -->
+        <g aria-label="Customer CSV source data">
+          <rect class="node-mask" x="4" y="64" width="184" height="80" rx="6"/><rect class="node input" x="8" y="68" width="176" height="72" rx="6"/>
+          <rect class="tagbox tag input" x="18" y="76" width="40" height="14" rx="2"/><text class="tag-text tag input" x="38" y="86">INPUT</text>
+          <text class="node-title" x="96" y="112">Customer CSV</text><text class="node-sub" x="96" y="128">all source fields</text>
+        </g>
+        <g aria-label="Pandas and Pydantic ingestion pipeline">
+          <rect class="node-mask" x="208" y="60" width="160" height="88" rx="6"/><rect class="node backend" x="212" y="64" width="152" height="80" rx="6"/>
+          <rect class="tagbox tag backend" x="222" y="72" width="52" height="14" rx="2"/><text class="tag-text tag backend" x="248" y="82">PIPELINE</text>
+          <text class="node-title" x="288" y="108">Validate + stage</text><text class="node-sub" x="288" y="126">pandas · Pydantic</text>
+        </g>
+        <g aria-label="SQLite is the complete source of truth">
+          <rect class="node-mask" x="400" y="60" width="160" height="88" rx="6"/><rect class="node focal" x="404" y="64" width="152" height="80" rx="6"/>
+          <rect class="tagbox tag focal" x="414" y="72" width="44" height="14" rx="2"/><text class="tag-text tag focal" x="436" y="82">SOURCE</text>
+          <text class="node-title" x="480" y="108">SQLite</text><text class="node-sub" x="480" y="126">complete rows · exact values</text>
+        </g>
+        <g aria-label="Milvus Lite holds a compact vector index of customer summaries">
+          <rect class="node-mask" x="400" y="188" width="160" height="88" rx="6"/><rect class="node store" x="404" y="192" width="152" height="80" rx="6"/>
+          <rect class="tagbox tag store" x="414" y="200" width="44" height="14" rx="2"/><text class="tag-text tag store" x="436" y="210">INDEX</text>
+          <text class="node-title" x="480" y="236">Milvus Lite</text><text class="node-sub" x="480" y="254">compact summary vectors</text>
+        </g>
+        <g aria-label="FastAPI serves typed tools and the bounded Pydantic AI retrieval path using LangChain and Ollama">
+          <rect class="node-mask" x="592" y="60" width="160" height="88" rx="6"/><rect class="node backend" x="596" y="64" width="152" height="80" rx="6"/>
+          <rect class="tagbox tag backend" x="606" y="72" width="38" height="14" rx="2"/><text class="tag-text tag backend" x="625" y="82">API</text>
+          <text class="node-title" x="672" y="104">FastAPI + agent</text><text class="node-sub" x="672" y="120">Pydantic AI · LangChain</text><text class="node-sub" x="672" y="134">Ollama · qwen3:4b</text>
+        </g>
+        <g aria-label="Streamlit presents shared chat and customer, revenue, and security views">
+          <rect class="node-mask" x="786" y="60" width="160" height="88" rx="6"/><rect class="node output" x="790" y="64" width="152" height="80" rx="6"/>
+          <rect class="tagbox tag output" x="800" y="72" width="40" height="14" rx="2"/><text class="tag-text tag output" x="820" y="82">UI</text>
+          <text class="node-title" x="866" y="108">Streamlit</text><text class="node-sub" x="866" y="126">chat · details · revenue</text>
+        </g>
+        <!-- Cross-cutting controls span every runtime phase. -->
+        <rect x="4" y="388" width="960" height="40" rx="3" fill="#5e7a9b"/><text x="484" y="412" class="crosscut-label">AUTHENTICATION · CUSTOMER SCOPE · INPUT / OUTPUT GUARDRAILS · RE-AUTHORIZED TOOLS</text>
+        <rect x="4" y="432" width="960" height="40" rx="3" fill="#7c8f6f"/><text x="484" y="456" class="crosscut-label">LANGFUSE · STAGE TIMINGS · OUTCOMES · CONTENT-SAFE OPERATIONAL METADATA</text>
+        <rect x="972" y="40" width="28" height="216" rx="3" class="crosscut-security"/><text class="crosscut-label" transform="translate(990 148) rotate(-90)">SECURITY</text>
+        <rect x="972" y="256" width="28" height="216" rx="3" class="crosscut-observe"/><text class="crosscut-label" transform="translate(990 364) rotate(-90)">OBSERVABILITY</text>
+        <line class="legend-rule" x1="4" y1="508" x2="964" y2="508"/><text class="legend-label" x="8" y="532">READ THIS VIEW</text>
+        <text class="legend-text" x="112" y="532">SQLite is complete source truth; Milvus is the limited semantic index.</text>
+        <text class="legend-text" x="964" y="532" text-anchor="end">Local runtime · no cloud cluster implied</text>
+        <text class="legend-text" x="8" y="554">Exact questions use deterministic SQLite tools. Broader questions add customer-filtered retrieval and the local Ollama model.</text>
+      </svg>

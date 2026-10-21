@@ -1,12 +1,30 @@
 # Single-Agent GenAI Customer Knowledge Assistant
 
-A secure, observable, and context-aware enterprise AI knowledge assistant designed to answer queries regarding customer profiles, subscription plans, usage activity, and billing metrics.
+A locally runnable customer knowledge assistant for customer profiles, subscription plans, usage activity, and billing metrics. It combines scoped data access, deterministic tools for exact facts, and a bounded retrieval-and-agent path for broader questions.
 
-Unlike standard chatbots that hallucinate numbers or risk leaking cross-tenant data, this system implements a **zero-hallucination, dual-store architecture**:
-1. **Milvus Lite (Vector DB)** is used strictly for semantic discovery with tenant-scoped pre-filtering.
-2. **SQLite (Relational DB)** acts as the tamper-proof ground truth.
-3. **Pydantic AI Single Agent** queries typed, read-only tools rather than executing raw SQL.
-4. **Deterministic Fact Verification**: The language model never writes free-form answers about data. It emits structured claims that are validated against server-side source evidence before final prose is rendered.
+The app uses a **dual-store, evidence-checked architecture**:
+1. **Milvus Lite** is a compact semantic discovery index with customer-scoped filtering.
+2. **SQLite** stores the complete ingested source rows used for authorized exact reads.
+3. **Pydantic AI** orchestrates one bounded agent and typed, read-only tools; it does not generate raw SQL.
+4. **Application validation** checks supported claims against authorized evidence. This reduces unsupported answers; measured accuracy still depends on evaluation against reviewed examples.
+
+## End-to-end workflow
+
+The diagrams, request and ingestion paths, security controls, library-by-layer map, and qualitative path comparison are in the [detailed workflow guide](docs/customer_knowledge_assistant_workflow.html). The key diagrams are embedded below so they are visible directly on GitHub.
+
+### High-level architecture
+
+![High-level architecture of the Customer Knowledge Assistant](image-2.png)
+
+![Ingestion](image.png)
+
+![Question](image-1.png)
+
+### Answer-path comparison
+
+![Qualitative radar comparison of the exact chat, RAG and agent, and customer/revenue paths](docs/customer_knowledge_assistant_radar.svg)
+
+The local implementation is a single-host app. SQLite is the complete source of truth; the default Milvus collection is a compact semantic index, not a directory of every customer row. Langfuse timings are runtime observations; the radar in the workflow guide is explicitly a qualitative design comparison, not a benchmark.
 
 ---
 
@@ -39,20 +57,22 @@ When running locally, the following services and ports are active:
 
 ## 3. Libraries and Frameworks Used
 
-| Library / Tool | Version | Purpose in this Project |
-| :--- | :--- | :--- |
-| **Python** | `3.10+` | Core programming language for the entire backend, pipelines, and evaluation. |
-| **FastAPI** | `0.156.2` | High-performance asynchronous REST API framework providing authenticated endpoints. |
-| **Uvicorn** | `0.54.0` | Production ASGI web server running the FastAPI application. |
-| **Pydantic** | `2.14.1` | Strict data validation, schema enforcement, and immutable snapshot models. |
-| **Pydantic AI** | `2.58.0` | Orchestrates the single-agent loop, dependency injection, and typed claim generation. |
-| **LangChain Core** | `1.6.12` | Provides standardized `Document` abstractions and retrieval interfaces. |
-| **Milvus Lite (`milvus-lite`, `langchain-milvus`)** | `3.2.2` / `0.4.0` | Embedded vector database storing semantic customer summaries with metadata filtering. |
-| **SQLite3** | Standard Lib | Relational ground-truth database storing exact values, timestamps, and row provenance. |
-| **Ollama (`langchain-ollama`)** | `1.1.0` | Local offline execution of LLM and embedding models without cloud API costs. |
-| **Streamlit** | `1.66.0` | Reactive web interface with customer selector, chat history, and evidence expanders. |
-| **Langfuse** | `5.0.3` | LLM observability platform tracking latency, stages, and token costs without logging PII. |
-| **Pytest & Pytest-Asyncio** | `9.1.1` | Automated testing suite for unit tests, security red-teaming, and API contracts. |
+| Runtime level | Library / Tool | Version | What it does here |
+| :--- | :--- | :--- | :--- |
+| Language / runtime | **Python** | `3.10+` | Implements API, ingestion, agent, analytics, and evaluation logic. |
+| HTTP API | **FastAPI** | `0.156.2` | Declares REST endpoints and dependency-injected request handling. |
+| ASGI server | **Uvicorn** | `0.54.0` | Runs the FastAPI application locally. |
+| Contracts / settings | **Pydantic** | `2.14.1` | Validates request/response schemas, configuration, and source structures. |
+| Agent orchestration | **Pydantic AI** | `2.58.0` | Runs the bounded single-agent path with typed dependencies and tools. |
+| Retrieval abstractions | **LangChain Core** | `1.6.12` | Supplies `Document` and `Embeddings` interfaces used by project RAG code. |
+| Vector retrieval | **Milvus Lite + langchain-milvus + PyMilvus** | `3.2.2` / `0.4.0` / `3.0.2` | Stores compact summary vectors and performs customer-filtered similarity search. |
+| Source of truth | **SQLite3** | Standard library | Stores all ingested rows for exact customer reads and deterministic calculations. |
+| Model providers | **Ollama + langchain-ollama** | `1.1.0` | Serves the configured local Qwen chat and Nomic embedding models. |
+| Presentation | **Streamlit** | `1.66.0` | Renders shared chat, customer/revenue views, and security/accuracy status. |
+| Observability | **Langfuse** | `5.0.3` | Receives safe trace stages, outcomes, and operational measurements when configured. |
+| Tests / evaluation | **Pytest + Pytest-Asyncio** | `9.1.1` | Exercises unit/API/security contracts and the offline evaluation suite. |
+
+The detailed workflow guide includes a layer-by-layer library map that shows where each package acts and which source files implement the handoffs.
 
 ---
 

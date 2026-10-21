@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A detailed workflow guide to customer data ingestion, authorized question answering, retrieval, validation, and observability in the Customer Knowledge Assistant.">
+  <title>Customer Knowledge Assistant — System Workflow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f5f5f5;
+      --paper-2: #ececec;
+      --ink: #2d3142;
+      --muted: #4f5d75;
+      --soft: #5a6580;
+      --rule: rgba(45,49,66,.12);
+      --rule-solid: rgba(79,93,117,.25);
+      --accent: #bf4520;
+      --accent-tint: rgba(191,69,32,.08);
+      --link: #2e5aa8;
+      --series-1: #7c8f6f;
+      --series-2: #5e7a9b;
+      --sans: 'Geist', system-ui, sans-serif;
+      --serif: 'Instrument Serif', 'Noto Serif', Georgia, serif;
+      --mono: 'Geist Mono', ui-monospace, Menlo, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); }
+    main { width: min(100% - 64px, 1320px); margin: 0 auto; padding: 52px 0 64px; }
+    .eyebrow, .tag, .lane-label, .legend-label, .card-kicker, .code-map th {
+      font-family: var(--mono); text-transform: uppercase; letter-spacing: .14em;
+    }
+    .eyebrow { margin: 0 0 12px; color: var(--muted); font-size: 11px; font-weight: 500; }
+    h1 { margin: 0; font: 400 clamp(38px, 5vw, 60px)/1.02 var(--serif); letter-spacing: -.02em; }
+    .intro { max-width: 76ch; margin: 16px 0 0; color: var(--muted); font-size: 16px; line-height: 1.65; }
+    .pathline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 24px 0 0; color: var(--soft); font: 11px/1.4 var(--mono); }
+    .pathline span { padding: 7px 10px; border: 1px solid var(--rule); border-radius: 4px; background: rgba(255,255,255,.55); }
+    .pathline b { color: var(--accent); font-weight: 500; }
+    section { margin-top: 50px; }
+    .section-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; }
+    .section-no { color: var(--accent); font: 500 11px var(--mono); letter-spacing: .1em; }
+    h2 { margin: 0; font: 600 22px/1.2 var(--sans); letter-spacing: -.02em; }
+    .section-copy { max-width: 78ch; margin: 0 0 18px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .diagram-scroll { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-inline: contain; }
+    svg.workflow { display: block; width: 100%; min-width: 1280px; }
+    .diagram-scroll svg.highlevel { min-width: 1000px; }
+    .diagram-scroll svg.radar { min-width: 1000px; }
+    .explain-grid { display: grid; grid-template-columns: 1.1fr 1fr .9fr; gap: 12px; margin-top: 18px; }
+    .card { min-width: 0; padding: 17px 18px 18px; border: 1px solid var(--rule); border-radius: 6px; background: #fff; }
+    .card.wide { grid-column: span 2; }
+    .card-kicker { margin: 0 0 9px; color: var(--soft); font-size: 9px; }
+    .card h3 { margin: 0 0 7px; font-size: 14px; font-weight: 600; }
+    .card p, .card li { color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .card p { margin: 0; }
+    .card ul { margin: 0; padding-left: 17px; }
+    .note { margin-top: 16px; padding: 14px 16px; border-left: 3px solid var(--accent); background: var(--accent-tint); color: var(--ink); font-size: 13px; line-height: 1.55; }
+    .code-map { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 12px; }
+    .code-map th { padding: 10px 12px; border-bottom: 1px solid var(--rule-solid); color: var(--soft); text-align: left; font-size: 9px; }
+    .code-map td { padding: 10px 12px; border-bottom: 1px solid var(--rule); color: var(--muted); vertical-align: top; line-height: 1.45; }
+    .code-map td:first-child { width: 34%; font-family: var(--mono); font-size: 11px; }
+    a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    footer { margin-top: 48px; padding-top: 15px; border-top: 1px solid var(--rule); color: var(--soft); font: 10px/1.6 var(--mono); }
+
+    /* SVG system: roomy labels, opaque arrow captions, and role-based fills. */
+    .lane-bg { fill: rgba(45,49,66,.018); }
+    .lane-rule { stroke: var(--rule-solid); stroke-width: 1; }
+    .lane-label { fill: var(--soft); font-size: 9px; font-weight: 500; letter-spacing: .14em; }
+    .lane-sub { fill: var(--muted); font: 9px var(--mono); }
+    .node-mask { fill: var(--paper); }
+    .node { stroke-width: 1; }
+    .node.backend { fill: #fff; stroke: var(--ink); }
+    .node.store { fill: rgba(45,49,66,.05); stroke: var(--muted); }
+    .node.input { fill: rgba(79,93,117,.10); stroke: var(--soft); }
+    .node.focal { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2; }
+    .node.output { fill: var(--paper-2); stroke: var(--muted); }
+    .tagbox { fill: transparent; stroke-width: .8; }
+    .tag-text { font: 500 7px var(--mono); letter-spacing: .08em; text-anchor: middle; }
+    .tag.backend { stroke: rgba(45,49,66,.4); fill: var(--ink); }
+    .tag.store { stroke: rgba(79,93,117,.55); fill: var(--muted); }
+    .tag.input { stroke: rgba(90,101,128,.55); fill: var(--soft); }
+    .tag.focal { stroke: rgba(191,69,32,.65); fill: var(--accent); }
+    .tag.output { stroke: rgba(79,93,117,.55); fill: var(--muted); }
+    .node-title { fill: var(--ink); font: 600 12px var(--sans); text-anchor: middle; }
+    .node-sub { fill: var(--muted); font: 9px var(--mono); text-anchor: middle; }
+    .connector { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+    .connector.link { stroke: var(--link); }
+    .connector.accent { stroke: var(--accent); }
+    .arrow-label-mask { fill: var(--paper); }
+    .arrow-label { fill: var(--soft); font: 400 8px var(--mono); letter-spacing: .06em; text-anchor: middle; }
+    .legend-rule { stroke: rgba(45,49,66,.16); stroke-width: .8; }
+    .legend-text { fill: var(--muted); font: 400 9px var(--sans); }
+    .legend-label { fill: var(--soft); font: 500 8px var(--mono); letter-spacing: .14em; }
+    .lane-head { fill: var(--muted); font: 500 8px var(--mono); letter-spacing: .13em; text-anchor: middle; }
+    .phase-label { fill: var(--muted); font: 500 8px var(--mono); letter-spacing: .1em; text-anchor: middle; }
+    .phase-chevron { fill: rgba(79,93,117,.06); stroke: var(--rule-solid); stroke-width: 1; }
+    .source-zone { fill: rgba(79,93,117,.025); stroke: var(--rule-solid); stroke-width: 1; stroke-dasharray: 4 4; }
+    .crosscut-label { fill: var(--paper); font: 500 8px var(--mono); letter-spacing: .1em; text-anchor: middle; }
+    .crosscut-security { fill: #5e7a9b; }
+    .crosscut-observe { fill: #7c8f6f; }
+    .radar-ring { fill: none; stroke: var(--rule-solid); stroke-width: 1; }
+    .radar-spoke { stroke: var(--rule); stroke-width: 1; }
+    .radar-axis { fill: var(--ink); font: 500 12px var(--sans); }
+    .radar-tick { fill: var(--soft); font: 9px var(--mono); }
+    .radar-series { stroke-width: 2; stroke-linejoin: round; }
+    .radar-legend { fill: var(--ink); font: 500 11px var(--sans); }
+    @media (max-width: 720px) {
+      main { width: min(100% - 32px, 1320px); padding-top: 32px; }
+      .explain-grid { grid-template-columns: 1fr; }
+      .card.wide { grid-column: auto; }
+      .code-map { font-size: 11px; }
+      .code-map td, .code-map th { padding: 8px 5px; }
+    }
+    @media print {
+      main { width: 100%; padding: 16px 0; }
+      .diagram-scroll { overflow: visible; }
+      svg.workflow { min-width: 0; }
+      section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">System workflow · local reference implementation</p>
+    <h1>Customer Knowledge Assistant</h1>
+    <p class="intro">This app loads customer records into a local source store, then answers questions for an authorized customer. Exact field and revenue questions use deterministic SQLite tools; broader questions use customer-filtered retrieval and a bounded Ollama agent. Every answer carries its customer ID, status, evidence, and limitations.</p>
+    <div class="pathline" aria-label="Technology path">
+      <span>Streamlit UI</span><b>→</b><span>FastAPI + access checks</span><b>→</b><span>SQLite + Milvus Lite</span><b>→</b><span>Ollama / Pydantic AI</span><b>→</b><span>Evidence-checked answer</span>
+    </div>
+  </header>
+
+  <section aria-labelledby="overview-heading">
+    <div class="section-head"><span class="section-no">00 / HIGH LEVEL</span><h2 id="overview-heading">One local app, two data paths</h2></div>
+    <p class="section-copy">This is the current single-host workflow started by <code>scripts.run_local</code>. The CSV is validated once into the complete SQLite source; compact summaries are embedded into Milvus Lite. Each question passes through FastAPI authorization, then uses either exact authorized data access or customer-filtered semantic retrieval. Cross-cutting bars show the security and telemetry controls.</p>
+    <div class="diagram-scroll">
+      <svg class="workflow highlevel" viewBox="0 0 1000 584" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="overview-title overview-desc">
+        <title id="overview-title">High-level local architecture of the Customer Knowledge Assistant</title>
+        <desc id="overview-desc">Customer CSV flows through pandas and Pydantic validation into SQLite and a compact Milvus Lite index. FastAPI serves authorized exact and retrieval paths to Streamlit. Security and Langfuse telemetry are cross-cutting controls.</desc>
+        <defs>
+          <marker id="overview-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#4f5d75"/></marker>
+          <marker id="overview-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#2e5aa8"/></marker>
+          <marker id="overview-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#bf4520"/></marker>
+        </defs>
+        <rect width="1000" height="584" fill="#f5f5f5"/>
+        <g aria-hidden="true">
+          <path class="phase-chevron" d="M0 4 H184 L192 18 L184 32 H0 Z"/><path class="phase-chevron" d="M192 4 H376 L384 18 L376 32 H192 L200 18 Z"/>
+          <path class="phase-chevron" d="M384 4 H568 L576 18 L568 32 H384 L392 18 Z"/><path class="phase-chevron" d="M576 4 H760 L768 18 L760 32 H576 L584 18 Z"/>
+          <path class="phase-chevron" d="M768 4 H964 V32 H768 L776 18 Z"/>
+          <text class="phase-label" x="92" y="21">SOURCE</text><text class="phase-label" x="288" y="21">INGEST</text><text class="phase-label" x="480" y="21">STORAGE</text><text class="phase-label" x="672" y="21">SERVE</text><text class="phase-label" x="866" y="21">CONSUME</text>
+          <rect class="source-zone" x="4" y="40" width="180" height="336" rx="4"/>
+          <text class="lane-label" x="16" y="56">LOCAL INPUT</text>
+        </g>
+        <!-- Labeled connectors are drawn behind their nodes. -->
+        <path class="connector link" d="M184 104 H212" marker-end="url(#overview-arrow-link)"/>
+        <path class="connector" d="M364 104 H404" marker-end="url(#overview-arrow)"/>
+        <path class="connector" d="M364 128 H380 Q388 128 388 136 V224 Q388 232 396 232 H404" marker-end="url(#overview-arrow)"/>
+        <path class="connector accent" d="M556 104 H596" marker-end="url(#overview-arrow-accent)"/>
+        <path class="connector" d="M556 232 H572 Q580 232 580 224 V128 Q580 120 588 120 H596" marker-end="url(#overview-arrow)"/>
+        <path class="connector link" d="M748 104 H790" marker-end="url(#overview-arrow-link)"/>
+        <!-- Opaque labels leave a visible gap around each connector. -->
+        <rect class="arrow-label-mask" x="186" y="84" width="24" height="12" rx="2"/><text class="arrow-label" x="198" y="93">CSV</text>
+        <rect class="arrow-label-mask" x="368" y="84" width="32" height="12" rx="2"/><text class="arrow-label" x="384" y="93">ROWS</text>
+        <rect class="arrow-label-mask" x="396" y="166" width="54" height="12" rx="2"/><text class="arrow-label" x="423" y="175">SUMMARIES</text>
+        <rect class="arrow-label-mask" x="558" y="84" width="36" height="12" rx="2"/><text class="arrow-label" x="576" y="93">EXACT</text>
+        <rect class="arrow-label-mask" x="588" y="166" width="38" height="12" rx="2"/><text class="arrow-label" x="607" y="175">TOP-K</text>
+        <rect class="arrow-label-mask" x="753" y="84" width="32" height="12" rx="2"/><text class="arrow-label" x="769" y="93">JSON</text>
+        <!-- Nodes -->
+        <g aria-label="Customer CSV source data">
+          <rect class="node-mask" x="4" y="64" width="184" height="80" rx="6"/><rect class="node input" x="8" y="68" width="176" height="72" rx="6"/>
+          <rect class="tagbox tag input" x="18" y="76" width="40" height="14" rx="2"/><text class="tag-text tag input" x="38" y="86">INPUT</text>
+          <text class="node-title" x="96" y="112">Customer CSV</text><text class="node-sub" x="96" y="128">all source fields</text>
+        </g>
+        <g aria-label="Pandas and Pydantic ingestion pipeline">
+          <rect class="node-mask" x="208" y="60" width="160" height="88" rx="6"/><rect class="node backend" x="212" y="64" width="152" height="80" rx="6"/>
+          <rect class="tagbox tag backend" x="222" y="72" width="52" height="14" rx="2"/><text class="tag-text tag backend" x="248" y="82">PIPELINE</text>
+          <text class="node-title" x="288" y="108">Validate + stage</text><text class="node-sub" x="288" y="126">pandas · Pydantic</text>
+        </g>
+        <g aria-label="SQLite is the complete source of truth">
+          <rect class="node-mask" x="400" y="60" width="160" height="88" rx="6"/><rect class="node focal" x="404" y="64" width="152" height="80" rx="6"/>
+          <rect class="tagbox tag focal" x="414" y="72" width="44" height="14" rx="2"/><text class="tag-text tag focal" x="436" y="82">SOURCE</text>
+          <text class="node-title" x="480" y="108">SQLite</text><text class="node-sub" x="480" y="126">complete rows · exact values</text>
+        </g>
+        <g aria-label="Milvus Lite holds a compact vector index of customer summaries">
+          <rect class="node-mask" x="400" y="188" width="160" height="88" rx="6"/><rect class="node store" x="404" y="192" width="152" height="80" rx="6"/>
+          <rect class="tagbox tag store" x="414" y="200" width="44" height="14" rx="2"/><text class="tag-text tag store" x="436" y="210">INDEX</text>
+          <text class="node-title" x="480" y="236">Milvus Lite</text><text class="node-sub" x="480" y="254">compact summary vectors</text>
+        </g>
+        <g aria-label="FastAPI serves typed tools and the bounded Pydantic AI retrieval path using LangChain and Ollama">
+          <rect class="node-mask" x="592" y="60" width="160" height="88" rx="6"/><rect class="node backend" x="596" y="64" width="152" height="80" rx="6"/>
+          <rect class="tagbox tag backend" x="606" y="72" width="38" height="14" rx="2"/><text class="tag-text tag backend" x="625" y="82">API</text>
+          <text class="node-title" x="672" y="104">FastAPI + agent</text><text class="node-sub" x="672" y="120">Pydantic AI · LangChain</text><text class="node-sub" x="672" y="134">Ollama · qwen3:4b</text>
+        </g>
+        <g aria-label="Streamlit presents shared chat and customer, revenue, and security views">
+          <rect class="node-mask" x="786" y="60" width="160" height="88" rx="6"/><rect class="node output" x="790" y="64" width="152" height="80" rx="6"/>
+          <rect class="tagbox tag output" x="800" y="72" width="40" height="14" rx="2"/><text class="tag-text tag output" x="820" y="82">UI</text>
+          <text class="node-title" x="866" y="108">Streamlit</text><text class="node-sub" x="866" y="126">chat · details · revenue</text>
+        </g>
+        <!-- Cross-cutting controls span every runtime phase. -->
+        <rect x="4" y="388" width="960" height="40" rx="3" fill="#5e7a9b"/><text x="484" y="412" class="crosscut-label">AUTHENTICATION · CUSTOMER SCOPE · INPUT / OUTPUT GUARDRAILS · RE-AUTHORIZED TOOLS</text>
+        <rect x="4" y="432" width="960" height="40" rx="3" fill="#7c8f6f"/><text x="484" y="456" class="crosscut-label">LANGFUSE · STAGE TIMINGS · OUTCOMES · CONTENT-SAFE OPERATIONAL METADATA</text>
+        <rect x="972" y="40" width="28" height="216" rx="3" class="crosscut-security"/><text class="crosscut-label" transform="translate(990 148) rotate(-90)">SECURITY</text>
+        <rect x="972" y="256" width="28" height="216" rx="3" class="crosscut-observe"/><text class="crosscut-label" transform="translate(990 364) rotate(-90)">OBSERVABILITY</text>
+        <line class="legend-rule" x1="4" y1="508" x2="964" y2="508"/><text class="legend-label" x="8" y="532">READ THIS VIEW</text>
+        <text class="legend-text" x="112" y="532">SQLite is complete source truth; Milvus is the limited semantic index.</text>
+        <text class="legend-text" x="964" y="532" text-anchor="end">Local runtime · no cloud cluster implied</text>
+        <text class="legend-text" x="8" y="554">Exact questions use deterministic SQLite tools. Broader questions add customer-filtered retrieval and the local Ollama model.</text>
+      </svg>
+    </div>
+    <div class="note">The high-level view describes the local profile that <code>python -m scripts.run_local</code> starts. It does not claim a production cloud topology. The API, UI, Ollama, SQLite, and Milvus Lite may each have different readiness requirements.</div>
+  </section>
+
+  <section aria-labelledby="ingest-heading">
+    <div class="section-head"><span class="section-no">01 / INGEST</span><h2 id="ingest-heading">Build one active customer snapshot</h2></div>
+    <p class="section-copy">The local runner first ingests the configured CSV. SQLite keeps every validated source row for exact, customer-ID lookups. A compact set of summaries is embedded into Milvus Lite for discovery. The active manifest ties the source database and vector index to one versioned snapshot.</p>
+    <div class="diagram-scroll">
+      <svg class="workflow" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ingest-title ingest-desc">
+        <title id="ingest-title">Build the active customer snapshot</title>
+        <desc id="ingest-desc">A customer CSV is validated and staged, then written to SQLite and summarized for Ollama embeddings in Milvus Lite before a versioned active manifest is published.</desc>
+        <defs>
+          <marker id="ingest-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#4f5d75"/></marker>
+          <marker id="ingest-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#2e5aa8"/></marker>
+          <marker id="ingest-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#bf4520"/></marker>
+        </defs>
+        <rect width="1280" height="720" fill="#f5f5f5"/>
+        <g aria-hidden="true">
+          <rect class="lane-bg" x="40" y="80" width="1200" height="108"/>
+          <rect class="lane-bg" x="40" y="316" width="1200" height="108"/>
+          <rect class="lane-bg" x="40" y="552" width="1200" height="108"/>
+          <line class="lane-rule" x1="40" y1="80" x2="1240" y2="80"/><line class="lane-rule" x1="40" y1="188" x2="1240" y2="188"/>
+          <line class="lane-rule" x1="40" y1="196" x2="1240" y2="196"/><line class="lane-rule" x1="40" y1="304" x2="1240" y2="304"/>
+          <line class="lane-rule" x1="40" y1="316" x2="1240" y2="316"/><line class="lane-rule" x1="40" y1="424" x2="1240" y2="424"/>
+          <line class="lane-rule" x1="40" y1="432" x2="1240" y2="432"/><line class="lane-rule" x1="40" y1="540" x2="1240" y2="540"/>
+          <line class="lane-rule" x1="40" y1="552" x2="1240" y2="552"/><line class="lane-rule" x1="40" y1="660" x2="1240" y2="660"/>
+          <line class="lane-rule" x1="200" y1="80" x2="200" y2="660"/>
+          <text class="lane-label" x="52" y="126">SOURCE</text><text class="lane-sub" x="52" y="144">CSV + config</text>
+          <text class="lane-label" x="52" y="242">INGESTION</text><text class="lane-sub" x="52" y="260">validate · stage</text>
+          <text class="lane-label" x="52" y="362">SOURCE OF</text><text class="lane-label" x="52" y="374">TRUTH</text>
+          <text class="lane-label" x="52" y="478">DISCOVERY</text><text class="lane-sub" x="52" y="496">compact vector index</text>
+          <text class="lane-label" x="52" y="598">ACTIVATION</text><text class="lane-sub" x="52" y="616">one coherent version</text>
+        </g>
+        <!-- Connectors are behind the nodes. -->
+        <path class="connector link" d="M408 134 H432 Q440 134 440 142 V244 Q440 252 448 252 H460" marker-end="url(#ingest-arrow-link)"/>
+        <path class="connector" d="M652 232 H692 Q700 232 700 240 V366 Q700 374 708 374 H760" marker-end="url(#ingest-arrow)"/>
+        <path class="connector" d="M652 264 H708 Q716 264 716 272 V474 Q716 482 724 482 H760" marker-end="url(#ingest-arrow)"/>
+        <path class="connector" d="M952 482 H988" marker-end="url(#ingest-arrow)"/>
+        <path class="connector" d="M952 366 H960 Q968 366 968 374 V590 Q968 598 976 598 H988" marker-end="url(#ingest-arrow)"/>
+        <path class="connector accent" d="M1084 520 V560" marker-end="url(#ingest-arrow-accent)"/>
+        <!-- Nodes -->
+        <g aria-label="Configured customer CSV input">
+          <rect class="node-mask" x="228" y="92" width="184" height="84" rx="6"/><rect class="node input" x="232" y="96" width="176" height="76" rx="6"/>
+          <rect class="tagbox tag input" x="244" y="104" width="40" height="14" rx="2"/><text class="tag-text tag input" x="264" y="114">INPUT</text>
+          <text class="node-title" x="320" y="140">Customer CSV</text><text class="node-sub" x="320" y="158">dataset/customer.csv</text>
+        </g>
+        <g aria-label="Validate source records and stage ingestion">
+          <rect class="node-mask" x="456" y="208" width="200" height="84" rx="6"/><rect class="node backend" x="460" y="212" width="192" height="76" rx="6"/>
+          <rect class="tagbox tag backend" x="472" y="220" width="52" height="14" rx="2"/><text class="tag-text tag backend" x="498" y="230">PIPELINE</text>
+          <text class="node-title" x="556" y="256">Validate + stage</text><text class="node-sub" x="556" y="274">schema · IDs · nulls</text>
+        </g>
+        <g aria-label="All validated customer rows stored in SQLite">
+          <rect class="node-mask" x="756" y="324" width="200" height="84" rx="6"/><rect class="node store" x="760" y="328" width="192" height="76" rx="6"/>
+          <rect class="tagbox tag store" x="772" y="336" width="44" height="14" rx="2"/><text class="tag-text tag store" x="794" y="346">STORE</text>
+          <text class="node-title" x="856" y="372">SQLite source</text><text class="node-sub" x="856" y="390">all rows · exact reads</text>
+        </g>
+        <g aria-label="Compact customer discovery summaries prepared for embedding">
+          <rect class="node-mask" x="756" y="440" width="200" height="84" rx="6"/><rect class="node backend" x="760" y="444" width="192" height="76" rx="6"/>
+          <rect class="tagbox tag backend" x="772" y="452" width="60" height="14" rx="2"/><text class="tag-text tag backend" x="802" y="462">PREPARE</text>
+          <text class="node-title" x="856" y="488">Build summaries</text><text class="node-sub" x="856" y="506">100 discovery docs¹</text>
+        </g>
+        <g aria-label="Summaries embedded locally and indexed in Milvus Lite">
+          <rect class="node-mask" x="984" y="440" width="200" height="84" rx="6"/><rect class="node store" x="988" y="444" width="192" height="76" rx="6"/>
+          <rect class="tagbox tag store" x="1000" y="452" width="44" height="14" rx="2"/><text class="tag-text tag store" x="1022" y="462">INDEX</text>
+          <text class="node-title" x="1084" y="488">Milvus Lite</text><text class="node-sub" x="1084" y="506">Ollama embeddings · top-K</text>
+        </g>
+        <g aria-label="Versioned active manifest binds the source and vector index">
+          <rect class="node-mask" x="984" y="556" width="200" height="84" rx="6"/><rect class="node focal" x="988" y="560" width="192" height="76" rx="6"/>
+          <rect class="tagbox tag focal" x="1000" y="568" width="60" height="14" rx="2"/><text class="tag-text tag focal" x="1030" y="578">ACTIVE</text>
+          <text class="node-title" x="1084" y="604">Publish snapshot</text><text class="node-sub" x="1084" y="622">version + checksum + schema</text>
+        </g>
+        <line class="legend-rule" x1="40" y1="676" x2="1240" y2="676"/>
+        <text class="legend-label" x="44" y="699">LEGEND</text>
+        <rect x="116" y="688" width="12" height="12" rx="2" fill="rgba(79,93,117,.10)" stroke="#5a6580"/><text class="legend-text" x="136" y="698">source input</text>
+        <rect x="254" y="688" width="12" height="12" rx="2" fill="#fff" stroke="#2d3142"/><text class="legend-text" x="274" y="698">processing step</text>
+        <rect x="410" y="688" width="12" height="12" rx="2" fill="rgba(45,49,66,.05)" stroke="#4f5d75"/><text class="legend-text" x="430" y="698">local store / index</text>
+        <rect x="592" y="688" width="12" height="12" rx="2" fill="rgba(191,69,32,.08)" stroke="#bf4520"/><text class="legend-text" x="612" y="698">atomic active snapshot</text>
+        <text class="legend-text" x="1240" y="699" text-anchor="end">¹ Default runner embeds 100 summaries; full customer access remains in SQLite.</text>
+      </svg>
+    </div>
+    <div class="explain-grid">
+      <article class="card wide"><p class="card-kicker">Why two stores?</p><h3>SQLite is complete; Milvus is a compact discovery index.</h3><p>Exact customer lookup and financial arithmetic use the authorized SQLite source row. Milvus supplies semantic discovery over embedded summaries. With the local runner’s default 100-summary index, a customer outside Milvus is still fetched by exact ID from SQLite; the index limit controls semantic coverage, not customer availability.</p></article>
+      <article class="card"><p class="card-kicker">Consistency rule</p><h3>One active manifest</h3><p>The manifest binds the SQLite file, vector collection, schema, embedding configuration, checksum, and dataset version. Failed staging leaves the prior active snapshot in place.</p></article>
+    </div>
+  </section>
+
+  <section aria-labelledby="question-heading">
+    <div class="section-head"><span class="section-no">02 / QUESTION</span><h2 id="question-heading">Answer one authorized customer question</h2></div>
+    <p class="section-copy">The ID in the question can override the sidebar selection. FastAPI checks the identity and customer scope before any data access. The router then chooses a direct, deterministic tool path or a broader retrieval-plus-agent path; both converge on evidence validation before the UI displays an answer.</p>
+    <div class="diagram-scroll">
+      <svg class="workflow" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="question-title question-desc">
+        <title id="question-title">Authorized customer question workflow</title>
+        <desc id="question-desc">Streamlit sends a customer ID and question to FastAPI, which validates identity and scope before routing to exact SQLite tools or filtered Milvus retrieval and a bounded Ollama agent. Both answer paths are evidence-checked before the response returns to the user.</desc>
+        <defs>
+          <marker id="question-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#4f5d75"/></marker>
+          <marker id="question-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#2e5aa8"/></marker>
+          <marker id="question-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#bf4520"/></marker>
+        </defs>
+        <rect width="1280" height="720" fill="#f5f5f5"/>
+        <g aria-hidden="true">
+          <rect class="lane-bg" x="40" y="88" width="224" height="568"/><rect class="lane-bg" x="496" y="88" width="232" height="568"/><rect class="lane-bg" x="960" y="88" width="280" height="568"/>
+          <line class="lane-rule" x1="40" y1="88" x2="1240" y2="88"/><line class="lane-rule" x1="40" y1="656" x2="1240" y2="656"/>
+          <line class="lane-rule" x1="264" y1="88" x2="264" y2="656"/><line class="lane-rule" x1="496" y1="88" x2="496" y2="656"/><line class="lane-rule" x1="728" y1="88" x2="728" y2="656"/><line class="lane-rule" x1="960" y1="88" x2="960" y2="656"/>
+          <text class="lane-head" x="152" y="108">USER + STREAMLIT</text><text class="lane-head" x="380" y="108">FASTAPI</text><text class="lane-head" x="612" y="108">ROUTING</text><text class="lane-head" x="844" y="108">CUSTOMER DATA</text><text class="lane-head" x="1100" y="108">ANSWER PATH</text>
+        </g>
+        <!-- Connectors first; every elbow is rounded and stays clear of nodes. -->
+        <path class="connector link" d="M232 158 H296" marker-end="url(#question-arrow-link)"/>
+        <path class="connector link" d="M464 158 H528" marker-end="url(#question-arrow-link)"/>
+        <path class="connector" d="M696 140 H720 Q728 140 728 148 V306 Q728 314 736 314 H760" marker-end="url(#question-arrow)"/>
+        <path class="connector" d="M696 180 H736 Q744 180 744 188 V474 Q744 482 752 482 H760" marker-end="url(#question-arrow)"/>
+        <path class="connector" d="M844 272 V256 Q844 248 852 248 H1076 Q1084 248 1084 256 V336" marker-end="url(#question-arrow)"/>
+        <path class="connector" d="M844 440 V436 Q844 428 852 428 H1052 Q1060 428 1060 420" marker-end="url(#question-arrow)"/>
+        <path class="connector" d="M1060 420 V500" marker-end="url(#question-arrow)"/>
+        <path class="connector" d="M760 292 H744 V534 Q744 542 752 542 H1000" marker-end="url(#question-arrow)"/>
+        <path class="connector link" d="M1084 584 V620 Q1084 628 1076 628 H156 Q148 628 148 620 V604" marker-end="url(#question-arrow-link)"/>
+        <!-- Route labels sit beside their vertical connectors with an opaque gap. -->
+        <rect class="arrow-label-mask" x="684" y="214" width="36" height="12" rx="2"/><text class="arrow-label" x="702" y="223">EXACT</text>
+        <rect class="arrow-label-mask" x="700" y="394" width="36" height="12" rx="2"/><text class="arrow-label" x="718" y="403">BROAD</text>
+        <rect class="arrow-label-mask" x="570" y="636" width="68" height="12" rx="2"/><text class="arrow-label" x="604" y="645">RESPONSE</text>
+        <!-- Nodes -->
+        <g aria-label="User asks in shared Streamlit chat with the target customer ID">
+          <rect class="node-mask" x="56" y="116" width="176" height="84" rx="6"/><rect class="node input" x="60" y="120" width="168" height="76" rx="6"/>
+          <rect class="tagbox tag input" x="72" y="128" width="40" height="14" rx="2"/><text class="tag-text tag input" x="92" y="138">INPUT</text>
+          <text class="node-title" x="144" y="164">Question + ID</text><text class="node-sub" x="144" y="182">shared Streamlit chat</text>
+        </g>
+        <g aria-label="FastAPI authenticates the bearer identity and enforces customer scope and request limits">
+          <rect class="node-mask" x="292" y="116" width="176" height="84" rx="6"/><rect class="node backend" x="296" y="120" width="168" height="76" rx="6"/>
+          <rect class="tagbox tag backend" x="308" y="128" width="44" height="14" rx="2"/><text class="tag-text tag backend" x="330" y="138">GATE</text>
+          <text class="node-title" x="380" y="164">Authenticate + scope</text><text class="node-sub" x="380" y="182">body · rate · timeout bounds</text>
+        </g>
+        <g aria-label="The fixed question router selects an exact path or a broader RAG path">
+          <rect class="node-mask" x="524" y="116" width="176" height="84" rx="6"/><rect class="node backend" x="528" y="120" width="168" height="76" rx="6"/>
+          <rect class="tagbox tag backend" x="540" y="128" width="52" height="14" rx="2"/><text class="tag-text tag backend" x="566" y="138">ROUTER</text>
+          <text class="node-title" x="612" y="164">Route by intent</text><text class="node-sub" x="612" y="182">exact fact or broad question</text>
+        </g>
+        <g aria-label="Authorized fixed tools read exact values and calculate financial metrics from SQLite">
+          <rect class="node-mask" x="756" y="268" width="176" height="84" rx="6"/><rect class="node store" x="760" y="272" width="168" height="76" rx="6"/>
+          <rect class="tagbox tag store" x="772" y="280" width="44" height="14" rx="2"/><text class="tag-text tag store" x="794" y="290">SQLITE</text>
+          <text class="node-title" x="844" y="316">Exact read tools</text><text class="node-sub" x="844" y="334">source row · paise math</text>
+        </g>
+        <g aria-label="Milvus searches only the requested customer and returns relevant summaries">
+          <rect class="node-mask" x="756" y="436" width="176" height="84" rx="6"/><rect class="node store" x="760" y="440" width="168" height="76" rx="6"/>
+          <rect class="tagbox tag store" x="772" y="448" width="44" height="14" rx="2"/><text class="tag-text tag store" x="794" y="458">MILVUS</text>
+          <text class="node-title" x="844" y="484">Filtered retrieval</text><text class="node-sub" x="844" y="502">customer ID · top-K</text>
+        </g>
+        <g aria-label="Broader questions use focused context, fixed tools, one bounded Pydantic AI agent, and local Ollama inference">
+          <rect class="node-mask" x="996" y="332" width="176" height="92" rx="6"/><rect class="node focal" x="1000" y="336" width="168" height="84" rx="6"/>
+          <rect class="tagbox tag focal" x="1012" y="344" width="52" height="14" rx="2"/><text class="tag-text tag focal" x="1038" y="354">AGENT</text>
+          <text class="node-title" x="1084" y="382">Focused context</text><text class="node-title" x="1084" y="396">+ bounded agent</text><text class="node-sub" x="1084" y="412">fixed tools · Ollama</text>
+        </g>
+        <g aria-label="The output validator checks claims against authorized evidence and renders a deterministic answer">
+          <rect class="node-mask" x="996" y="496" width="176" height="92" rx="6"/><rect class="node backend" x="1000" y="500" width="168" height="84" rx="6"/>
+          <rect class="tagbox tag backend" x="1012" y="508" width="60" height="14" rx="2"/><text class="tag-text tag backend" x="1042" y="518">VALIDATE</text>
+          <text class="node-title" x="1084" y="546">Check claims + ID</text><text class="node-title" x="1084" y="560">then render</text><text class="node-sub" x="1084" y="576">unsupported → limitation</text>
+        </g>
+        <g aria-label="Streamlit displays the answer with customer ID, status, evidence, and limitations">
+          <rect class="node-mask" x="56" y="516" width="176" height="92" rx="6"/><rect class="node output" x="60" y="520" width="168" height="84" rx="6"/>
+          <rect class="tagbox tag output" x="72" y="528" width="48" height="14" rx="2"/><text class="tag-text tag output" x="96" y="538">RESULT</text>
+          <text class="node-title" x="144" y="566">Answer with ID</text><text class="node-sub" x="144" y="584">status · evidence · limits</text>
+        </g>
+        <line class="legend-rule" x1="40" y1="676" x2="1240" y2="676"/>
+        <text class="legend-label" x="44" y="699">LEGEND</text>
+        <line x1="116" y1="694" x2="148" y2="694" stroke="#2e5aa8" stroke-width="1.4" marker-end="url(#question-arrow-link)"/><text class="legend-text" x="160" y="698">UI / API handoff</text>
+        <line x1="300" y1="694" x2="332" y2="694" stroke="#4f5d75" stroke-width="1.4" marker-end="url(#question-arrow)"/><text class="legend-text" x="344" y="698">internal data flow</text>
+        <rect x="500" y="688" width="12" height="12" rx="2" fill="rgba(191,69,32,.08)" stroke="#bf4520"/><text class="legend-text" x="520" y="698">model-assisted path</text>
+        <text class="legend-text" x="1240" y="699" text-anchor="end">EXACT skips model generation · BROAD uses retrieval + bounded agent.</text>
+      </svg>
+    </div>
+    <div class="explain-grid">
+      <article class="card"><p class="card-kicker">Exact fast path</p><h3>Use deterministic tools when possible.</h3><p>Known field questions and monthly revenue can read authorized SQLite values directly. Financial amounts remain integer paise, and the response renderer formats them without binary floating-point arithmetic.</p></article>
+      <article class="card"><p class="card-kicker">Broader RAG path</p><h3>Retrieve narrowly, answer with evidence.</h3><p>Milvus applies the requested customer filter before top-K. Context is limited to relevant fields and a token/character budget. The single Pydantic AI agent gets fixed read-only tools; Ollama runs locally.</p></article>
+      <article class="card"><p class="card-kicker">Answer contract</p><h3>Every response names its customer.</h3><p>The validator checks user ID, metric or source field, value, and unit against authorized tool results. Unsupported claims become insufficient-evidence responses or explicit limitations.</p></article>
+    </div>
+  </section>
+
+  <section aria-labelledby="controls-heading">
+    <div class="section-head"><span class="section-no">03 / TRUST + VISIBILITY</span><h2 id="controls-heading">Controls run across the workflow</h2></div>
+    <p class="section-copy">These protections are enforced at the point where they matter; the model is never the authority for access, source values, or whether a claim is supported.</p>
+    <div class="explain-grid">
+      <article class="card"><p class="card-kicker">01 · Identity</p><h3>Scope before data access</h3><p>FastAPI authenticates a configured bearer identity and checks the customer ID. Tools and retrieval independently authorize that ID; a model request cannot expand the scope.</p></article>
+      <article class="card"><p class="card-kicker">02 · Retrieval</p><h3>Filter, then verify</h3><p>Milvus search is customer-filtered. Returned metadata is checked against the active dataset version, schema, source checksum, and embedding configuration before context is built.</p></article>
+      <article class="card"><p class="card-kicker">03 · Output</p><h3>Evidence or a clear limitation</h3><p>Input and output guardrails block unsafe requests and unsupported facts. The UI shows status, customer ID, source evidence, and limitations so users can judge what the data supports.</p></article>
+      <article class="card wide"><p class="card-kicker">04 · Observability</p><h3>Langfuse sees operational metadata, not customer content.</h3><p>Allowlisted trace metadata can include stage timings, outcome, evidence presence, tool/request counts, and provider token counts when available. Questions, prompts, answers, records, and credentials are excluded. Accuracy scores are grounding/validation signals; a defensible factual-accuracy percentage requires a reviewed labeled test set.</p></article>
+      <article class="card"><p class="card-kicker">Current dashboard note</p><h3>Recent traces showed API spans only.</h3><p>The linked project’s recent window showed request, authentication, and final-status spans, but no retrieval or model-generation observations. Its current dashboard is useful for request health; RAG/model performance needs those spans to appear first.</p></article>
+      <article class="card"><p class="card-kicker">Run locally</p><h3>One command starts the stack.</h3><p><code>python -m scripts.run_local</code> loads/reuses the dataset, then starts FastAPI on port 8000 and Streamlit on port 8501. Ollama must be available with the configured chat and embedding models.</p></article>
+      <article class="card wide"><p class="card-kicker">Other Streamlit tabs</p><h3>Customer details, Revenue, and Security &amp; accuracy</h3><p>Customer details and Revenue load authorized customer summaries and deterministic monthly metrics. Security &amp; accuracy shows backend readiness, grounding/performance signals, and Langfuse connection status. These views use the same backend identity and active snapshot as chat.</p></article>
+    </div>
+  </section>
+
+  <section aria-labelledby="stack-heading">
+    <div class="section-head"><span class="section-no">04 / IMPLEMENTATION STACK</span><h2 id="stack-heading">Which library acts at each level</h2></div>
+    <p class="section-copy">Libraries are grouped by the responsibility they perform in this repository. Arrows in the call column show the request/data direction; a library’s presence does not mean it owns every step in that row.</p>
+    <table class="code-map">
+      <thead><tr><th>Level</th><th>Library / component</th><th>Role and call path</th><th>Implementation</th></tr></thead>
+      <tbody>
+        <tr><td>Presentation</td><td>Streamlit</td><td>Renders shared chat, customer details, revenue, and security/accuracy views; calls the backend client.</td><td><a href="../streamlit_app.py">streamlit_app.py</a> · <a href="../frontend/client.py">frontend/client.py</a></td></tr>
+        <tr><td>HTTP transport</td><td>FastAPI · Starlette · Uvicorn · httpx</td><td>FastAPI defines endpoints and dependencies; Uvicorn runs ASGI; httpx is used by the UI client and tests. <code>/chat</code> and customer endpoints enter here.</td><td><a href="../app/main.py">app/main.py</a> · <a href="../app/api/routes.py">app/api/routes.py</a></td></tr>
+        <tr><td>Contracts + configuration</td><td>Pydantic · pydantic-settings</td><td>Validates request/response schemas and environment configuration before they reach business logic.</td><td><a href="../app/schemas.py">app/schemas.py</a> · <a href="../app/config.py">app/config.py</a></td></tr>
+        <tr><td>Authentication + guardrails</td><td>FastAPI dependencies · app-owned security checks</td><td>Validates bearer credentials, customer scope, request bounds, and content rules; data tools authorize again before reads.</td><td><a href="../app/security.py">app/security.py</a> · <code>app/guardrails/</code> · <a href="../app/api/dependencies.py">app/api/dependencies.py</a></td></tr>
+        <tr><td>Agent orchestration</td><td>Pydantic AI</td><td>Runs one bounded agent with typed dependencies/tools and validated structured output. Routing can skip generation for exact questions.</td><td><a href="../app/agent/orchestrator.py">app/agent/orchestrator.py</a> · <a href="../app/agent/tools.py">app/agent/tools.py</a></td></tr>
+        <tr><td>Retrieval + context</td><td>LangChain Core · app-owned RAG</td><td><code>Document</code> and <code>Embeddings</code> abstractions support document construction, customer-filtered retrieval, metadata checks, and context budgets.</td><td><a href="../app/rag/documents.py">documents.py</a> · <a href="../app/rag/retriever.py">retriever.py</a> · <a href="../app/rag/context.py">context.py</a> · <a href="../app/rag/embeddings.py">embeddings.py</a></td></tr>
+        <tr><td>Vector index</td><td>langchain-milvus · PyMilvus · Milvus Lite</td><td>Persists compact customer summary vectors and performs similarity search with a customer metadata filter. It is not the complete customer database.</td><td><a href="../app/rag/store.py">app/rag/store.py</a></td></tr>
+        <tr><td>Ingestion + source of truth</td><td>pandas · Python <code>sqlite3</code> · Pydantic</td><td>Reads and validates CSV batches, stages a versioned snapshot, stores all authorized source rows in SQLite, and indexes selected summaries in Milvus.</td><td><a href="../app/data/quality.py">quality.py</a> · <a href="../app/data/ingestion.py">ingestion.py</a> · <a href="../app/data/repository.py">repository.py</a></td></tr>
+        <tr><td>Model providers</td><td>Pydantic AI Ollama provider · langchain-ollama · optional langchain-openai</td><td>Ollama serves the local Qwen chat model and Nomic embedding model. OpenAI embedding support is an optional configured provider, not the default local path.</td><td><a href="../app/agent/orchestrator.py">orchestrator.py</a> · <a href="../app/rag/embeddings.py">embeddings.py</a></td></tr>
+        <tr><td>Exact analytics</td><td>Python service logic</td><td>Calculates revenue/payment totals from authorized SQLite facts using integer paise, then formats deterministic output.</td><td><a href="../app/services/analytics.py">app/services/analytics.py</a></td></tr>
+        <tr><td>Observability</td><td>Langfuse SDK · project telemetry adapter</td><td>Exports safe stage timings, outcomes, and available usage metadata. It does not by itself establish factual accuracy; use a reviewed evaluation set for that.</td><td><a href="../app/observability/telemetry.py">app/observability/telemetry.py</a> · <a href="../scripts/evaluate.py">scripts/evaluate.py</a></td></tr>
+      </tbody>
+    </table>
+    <div class="note">Request sequence: <strong>Streamlit → httpx → FastAPI → auth/scope → router → SQLite tool or LangChain/Milvus retrieval → Pydantic AI/Ollama when needed → evidence validation → response.</strong> Ingestion has a separate sequence: <strong>CSV → pandas/Pydantic validation → SQLite + summary embeddings → Milvus Lite → active snapshot.</strong></div>
+  </section>
+
+  <section aria-labelledby="radar-heading">
+    <div class="section-head"><span class="section-no">05 / RADAR · SPIDER</span><h2 id="radar-heading">Compare the app’s three answer paths</h2></div>
+    <p class="section-copy">The axes compare the implementation shape of the exact chat fast path, the broader RAG/agent path, and the direct customer/revenue views. A higher mark means more of that capability by design.</p>
+    <div class="diagram-scroll">
+      <svg class="workflow radar" viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="radar-title radar-desc">
+        <title id="radar-title">Qualitative radar comparison of customer assistant paths</title>
+        <desc id="radar-desc">A five-axis radar compares relative expected speed, determinism, semantic breadth, model independence, and evidence traceability for exact chat, RAG with agent, and direct dashboard views. Scores are qualitative design ratings and not measurements.</desc>
+        <rect width="1000" height="620" fill="#f5f5f5"/>
+        <g aria-hidden="true">
+          <polygon class="radar-ring" points="500,302 546,335 528,389 472,389 454,335"/>
+          <polygon class="radar-ring" points="500,254 591,320 556,428 444,428 409,320"/>
+          <polygon class="radar-ring" points="500,206 637,306 585,466 415,466 363,306"/>
+          <polygon class="radar-ring" points="500,158 682,291 613,505 387,505 318,291"/>
+          <polygon class="radar-ring" points="500,110 728,276 641,544 359,544 272,276"/>
+          <line class="radar-spoke" x1="500" y1="350" x2="500" y2="110"/><line class="radar-spoke" x1="500" y1="350" x2="728" y2="276"/>
+          <line class="radar-spoke" x1="500" y1="350" x2="641" y2="544"/><line class="radar-spoke" x1="500" y1="350" x2="359" y2="544"/>
+          <line class="radar-spoke" x1="500" y1="350" x2="272" y2="276"/>
+          <text class="radar-tick" x="490" y="307" text-anchor="end">1</text><text class="radar-tick" x="490" y="259" text-anchor="end">2</text>
+          <text class="radar-tick" x="490" y="211" text-anchor="end">3</text><text class="radar-tick" x="490" y="163" text-anchor="end">4</text><text class="radar-tick" x="490" y="115" text-anchor="end">5</text>
+          <text class="radar-axis" x="500" y="82" text-anchor="middle">Expected speed</text><text class="radar-axis" x="758" y="275">Determinism</text>
+          <text class="radar-axis" x="656" y="566">Semantic breadth</text><text class="radar-axis" x="244" y="566" text-anchor="end">Model independence</text>
+          <text class="radar-axis" x="242" y="275" text-anchor="end">Evidence traceability</text>
+        </g>
+        <!-- Qualitative design ratings, normalized from 1–5 to the same radial scale. -->
+        <polygon class="radar-series" points="500,110 728,276 584.6,466.4 359,544 272,276" fill="#bf4520" fill-opacity=".10" stroke="#bf4520"/>
+        <polygon class="radar-series" points="500,254 637,305.6 641,544 471.8,388.8 317,299.2" fill="#7c8f6f" fill-opacity=".12" stroke="#7c8f6f"/>
+        <polygon class="radar-series" points="500,110 728,276 556.4,427.6 359,544 317,299.2" fill="#5e7a9b" fill-opacity=".10" stroke="#5e7a9b"/>
+        <g aria-hidden="true" fill="#bf4520"><circle cx="500" cy="110" r="3.5"/><circle cx="728" cy="276" r="3.5"/><circle cx="584.6" cy="466.4" r="3.5"/><circle cx="359" cy="544" r="3.5"/><circle cx="272" cy="276" r="3.5"/></g>
+        <g aria-hidden="true" fill="#7c8f6f"><circle cx="500" cy="254" r="3.5"/><circle cx="637" cy="305.6" r="3.5"/><circle cx="641" cy="544" r="3.5"/><circle cx="471.8" cy="388.8" r="3.5"/><circle cx="317" cy="299.2" r="3.5"/></g>
+        <g aria-hidden="true" fill="#5e7a9b"><circle cx="500" cy="110" r="3.5"/><circle cx="728" cy="276" r="3.5"/><circle cx="556.4" cy="427.6" r="3.5"/><circle cx="359" cy="544" r="3.5"/><circle cx="317" cy="299.2" r="3.5"/></g>
+        <line class="legend-rule" x1="40" y1="584" x2="960" y2="584"/>
+        <line x1="76" y1="602" x2="98" y2="602" stroke="#bf4520" stroke-width="3"/><text class="radar-legend" x="108" y="606">Exact chat fast path</text>
+        <line x1="350" y1="602" x2="372" y2="602" stroke="#7c8f6f" stroke-width="3"/><text class="radar-legend" x="382" y="606">RAG + agent path</text>
+        <line x1="626" y1="602" x2="648" y2="602" stroke="#5e7a9b" stroke-width="3"/><text class="radar-legend" x="658" y="606">Customer / revenue views</text>
+      </svg>
+    </div>
+    <div class="explain-grid">
+      <article class="card wide"><p class="card-kicker">Rating key · ordinal 1–5</p><h3>Qualitative architecture profile, not a performance result.</h3><p>Ratings reflect the code path: exact and dashboard views avoid model generation, so they rank high on expected speed, determinism, and model independence. The broader RAG path covers semantic questions, but adds vector retrieval and local generation. All paths can return evidence; exact-value claims remain grounded in authorized source data.</p></article>
+      <article class="card"><p class="card-kicker">How to measure for real</p><h3>Use matched test questions.</h3><p>Measure p50/p95 latency and answer outcomes over a reviewed, representative test set. The Security &amp; accuracy tab and Langfuse show operational signals; they do not turn this design radar into a measured benchmark automatically.</p></article>
+    </div>
+    <table class="code-map">
+      <thead><tr><th>Path</th><th>Speed</th><th>Determinism</th><th>Breadth</th><th>Model independence</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr><td>Exact chat fast path</td><td>5</td><td>5</td><td>2</td><td>5</td><td>5</td></tr>
+        <tr><td>RAG + agent</td><td>2</td><td>2</td><td>5</td><td>1</td><td>4</td></tr>
+        <tr><td>Customer / revenue views</td><td>5</td><td>5</td><td>2</td><td>5</td><td>4</td></tr>
+      </tbody>
+    </table>
+    <p class="section-copy">Scale: 1 = less of the named capability in this app’s design; 5 = more. “Speed” is expected relative path cost (not measured latency); “breadth” is semantic question coverage. These ordinal values are for architectural comparison only.</p>
+  </section>
+
+  <section aria-labelledby="code-heading">
+    <div class="section-head"><span class="section-no">06 / CODE MAP</span><h2 id="code-heading">Where each stage lives</h2></div>
+    <p class="section-copy">Open these files from the project root to follow the implementation from the visible UI down to the source evidence and telemetry adapter.</p>
+    <table class="code-map">
+      <thead><tr><th>File</th><th>Role in the workflow</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../streamlit_app.py">streamlit_app.py</a></td><td>Streamlit chat, customer selection, details/revenue views, security and accuracy dashboard.</td></tr>
+        <tr><td><a href="../app/api/routes.py">app/api/routes.py</a> · <a href="../app/security.py">app/security.py</a></td><td>FastAPI endpoints, bearer authentication, authorization, and scoped customer requests.</td></tr>
+        <tr><td><a href="../app/agent/orchestrator.py">app/agent/orchestrator.py</a> · <a href="../app/agent/tools.py">app/agent/tools.py</a></td><td>Question routing, deterministic fast path, bounded agent, fixed tools, validation, and response construction.</td></tr>
+        <tr><td><a href="../app/rag/retriever.py">app/rag/retriever.py</a> · <a href="../app/rag/context.py">app/rag/context.py</a></td><td>Customer-filtered vector retrieval, metadata checks, field allowlist, and context budgets.</td></tr>
+        <tr><td><a href="../app/data/ingestion.py">app/data/ingestion.py</a> · <a href="../app/rag/store.py">app/rag/store.py</a></td><td>Source validation, SQLite ingestion, Milvus indexing, active snapshot and version checks.</td></tr>
+        <tr><td><a href="../app/observability/telemetry.py">app/observability/telemetry.py</a></td><td>Content-safe trace stages, pseudonymous references, score export, and Langfuse adapter.</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <footer>Designed as a local workflow reference · Default light editorial palette · Source of truth: this repository’s current implementation and docs · Review the live Langfuse spans before treating model-level monitoring as complete.</footer>
+</main>
+</body>
+</html>

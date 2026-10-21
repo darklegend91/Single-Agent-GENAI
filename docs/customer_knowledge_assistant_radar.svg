@@ -1,0 +1,70 @@
+<svg class="workflow radar" width="1000" height="620" viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="radar-title radar-desc">
+<style>
+:root { --paper:#f5f5f5; --paper-2:#ececec; --ink:#2d3142; --muted:#4f5d75; --soft:#5a6580; --rule:rgba(45,49,66,.12); --rule-solid:rgba(79,93,117,.25); --accent:#bf4520; --accent-tint:rgba(191,69,32,.08); --link:#2e5aa8; --series-1:#7c8f6f; --series-2:#5e7a9b; --sans:Arial,system-ui,sans-serif; --mono:Menlo,Consolas,monospace; }
+.node-mask {fill: var(--paper);}
+.node {stroke-width: 1;}
+.node.backend {fill: #fff; stroke: var(--ink);}
+.node.store {fill: rgba(45,49,66,.05); stroke: var(--muted);}
+.node.input {fill: rgba(79,93,117,.10); stroke: var(--soft);}
+.node.focal {fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2;}
+.node.output {fill: var(--paper-2); stroke: var(--muted);}
+.tagbox {fill: transparent; stroke-width: .8;}
+.tag-text {font: 500 7px var(--mono); letter-spacing: .08em; text-anchor: middle;}
+.tag.backend {stroke: rgba(45,49,66,.4); fill: var(--ink);}
+.tag.store {stroke: rgba(79,93,117,.55); fill: var(--muted);}
+.tag.input {stroke: rgba(90,101,128,.55); fill: var(--soft);}
+.tag.focal {stroke: rgba(191,69,32,.65); fill: var(--accent);}
+.tag.output {stroke: rgba(79,93,117,.55); fill: var(--muted);}
+.node-title {fill: var(--ink); font: 600 12px var(--sans); text-anchor: middle;}
+.node-sub {fill: var(--muted); font: 9px var(--mono); text-anchor: middle;}
+.connector {fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round;}
+.connector.link {stroke: var(--link);}
+.connector.accent {stroke: var(--accent);}
+.arrow-label-mask {fill: var(--paper);}
+.arrow-label {fill: var(--soft); font: 400 8px var(--mono); letter-spacing: .06em; text-anchor: middle;}
+.legend-rule {stroke: rgba(45,49,66,.16); stroke-width: .8;}
+.legend-text {fill: var(--muted); font: 400 9px var(--sans);}
+.legend-label {fill: var(--soft); font: 500 8px var(--mono); letter-spacing: .14em;}
+.phase-label {fill: var(--muted); font: 500 8px var(--mono); letter-spacing: .1em; text-anchor: middle;}
+.phase-chevron {fill: rgba(79,93,117,.06); stroke: var(--rule-solid); stroke-width: 1;}
+.source-zone {fill: rgba(79,93,117,.025); stroke: var(--rule-solid); stroke-width: 1; stroke-dasharray: 4 4;}
+.crosscut-label {fill: var(--paper); font: 500 8px var(--mono); letter-spacing: .1em; text-anchor: middle;}
+.crosscut-security {fill: #5e7a9b;}
+.crosscut-observe {fill: #7c8f6f;}
+.radar-ring {fill: none; stroke: var(--rule-solid); stroke-width: 1;}
+.radar-spoke {stroke: var(--rule); stroke-width: 1;}
+.radar-axis {fill: var(--ink); font: 500 12px var(--sans);}
+.radar-tick {fill: var(--soft); font: 9px var(--mono);}
+.radar-series {stroke-width: 2; stroke-linejoin: round;}
+.radar-legend {fill: var(--ink); font: 500 11px var(--sans);}
+</style>
+        <title id="radar-title">Qualitative radar comparison of customer assistant paths</title>
+        <desc id="radar-desc">A five-axis radar compares relative expected speed, determinism, semantic breadth, model independence, and evidence traceability for exact chat, RAG with agent, and direct dashboard views. Scores are qualitative design ratings and not measurements.</desc>
+        <rect width="1000" height="620" fill="#f5f5f5"/>
+        <g aria-hidden="true">
+          <polygon class="radar-ring" points="500,302 546,335 528,389 472,389 454,335"/>
+          <polygon class="radar-ring" points="500,254 591,320 556,428 444,428 409,320"/>
+          <polygon class="radar-ring" points="500,206 637,306 585,466 415,466 363,306"/>
+          <polygon class="radar-ring" points="500,158 682,291 613,505 387,505 318,291"/>
+          <polygon class="radar-ring" points="500,110 728,276 641,544 359,544 272,276"/>
+          <line class="radar-spoke" x1="500" y1="350" x2="500" y2="110"/><line class="radar-spoke" x1="500" y1="350" x2="728" y2="276"/>
+          <line class="radar-spoke" x1="500" y1="350" x2="641" y2="544"/><line class="radar-spoke" x1="500" y1="350" x2="359" y2="544"/>
+          <line class="radar-spoke" x1="500" y1="350" x2="272" y2="276"/>
+          <text class="radar-tick" x="490" y="307" text-anchor="end">1</text><text class="radar-tick" x="490" y="259" text-anchor="end">2</text>
+          <text class="radar-tick" x="490" y="211" text-anchor="end">3</text><text class="radar-tick" x="490" y="163" text-anchor="end">4</text><text class="radar-tick" x="490" y="115" text-anchor="end">5</text>
+          <text class="radar-axis" x="500" y="82" text-anchor="middle">Expected speed</text><text class="radar-axis" x="758" y="275">Determinism</text>
+          <text class="radar-axis" x="656" y="566">Semantic breadth</text><text class="radar-axis" x="244" y="566" text-anchor="end">Model independence</text>
+          <text class="radar-axis" x="242" y="275" text-anchor="end">Evidence traceability</text>
+        </g>
+        <!-- Qualitative design ratings, normalized from 1–5 to the same radial scale. -->
+        <polygon class="radar-series" points="500,110 728,276 584.6,466.4 359,544 272,276" fill="#bf4520" fill-opacity=".10" stroke="#bf4520"/>
+        <polygon class="radar-series" points="500,254 637,305.6 641,544 471.8,388.8 317,299.2" fill="#7c8f6f" fill-opacity=".12" stroke="#7c8f6f"/>
+        <polygon class="radar-series" points="500,110 728,276 556.4,427.6 359,544 317,299.2" fill="#5e7a9b" fill-opacity=".10" stroke="#5e7a9b"/>
+        <g aria-hidden="true" fill="#bf4520"><circle cx="500" cy="110" r="3.5"/><circle cx="728" cy="276" r="3.5"/><circle cx="584.6" cy="466.4" r="3.5"/><circle cx="359" cy="544" r="3.5"/><circle cx="272" cy="276" r="3.5"/></g>
+        <g aria-hidden="true" fill="#7c8f6f"><circle cx="500" cy="254" r="3.5"/><circle cx="637" cy="305.6" r="3.5"/><circle cx="641" cy="544" r="3.5"/><circle cx="471.8" cy="388.8" r="3.5"/><circle cx="317" cy="299.2" r="3.5"/></g>
+        <g aria-hidden="true" fill="#5e7a9b"><circle cx="500" cy="110" r="3.5"/><circle cx="728" cy="276" r="3.5"/><circle cx="556.4" cy="427.6" r="3.5"/><circle cx="359" cy="544" r="3.5"/><circle cx="317" cy="299.2" r="3.5"/></g>
+        <line class="legend-rule" x1="40" y1="584" x2="960" y2="584"/>
+        <line x1="76" y1="602" x2="98" y2="602" stroke="#bf4520" stroke-width="3"/><text class="radar-legend" x="108" y="606">Exact chat fast path</text>
+        <line x1="350" y1="602" x2="372" y2="602" stroke="#7c8f6f" stroke-width="3"/><text class="radar-legend" x="382" y="606">RAG + agent path</text>
+        <line x1="626" y1="602" x2="648" y2="602" stroke="#5e7a9b" stroke-width="3"/><text class="radar-legend" x="658" y="606">Customer / revenue views</text>
+      </svg>

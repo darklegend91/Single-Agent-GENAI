@@ -19,7 +19,9 @@ class Assistant:
 
 @pytest.fixture
 def client(credential_mapping):
-    settings = Settings(credential_mapping=credential_mapping)
+    # API tests use explicit synthetic settings and must not inherit developer
+    # credentials from the local runtime .env file.
+    settings = Settings(credential_mapping=credential_mapping, _env_file=None)
     return TestClient(create_app(settings, AppServices(assistant=Assistant(), demo=True)))
 
 
